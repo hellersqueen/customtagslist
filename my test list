@@ -1,0 +1,5 @@
+{
+  "Fruits": ["apple", "banana", "orange", "grape", "pineapple"],
+  "Vegetables": ["carrot", "broccoli", "spinach", "potato", "tomato"],
+  "Colors": ["red", "blue", "green", "yellow", "purple"]
+}
