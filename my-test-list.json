@@ -1,3 +1,6 @@
 {
-"Issues": ["world: news", "politics", "current", "world: elections", "capitalism", "black history", "native american culture", "appropriation", "black culture", "jewish culture", "jewish history", "latinx", "adhd", "anxiety", "depression", "mental illness", "tw: eating disorders", "tw: self harm", "feminism", "body positivity", "women history", "sexism", "rape culture", "sex positivity", "abortion", "gender talk", "racism", "history: racism", "islamophobia", "anti asian racism", "anti black racism", "anti semitism", "america is fucked up", "canada is fucked up", "uk is fucked up", "lgbtqia+", "labels", "queer history", "asexuality", "bisexuality", "pansexuality", "trans stuff", "ableism", "fatphobia", "confidence issues", "abuse", "bigotry"],  
+  "Fruits": ["apple", "banana", "orange", "grape", "pineapple"],
+  "Vegetables": ["carrot", "broccoli", "spinach", "potato", "tomato"],
+  "Colors": ["red", "blue", "green", "yellow", "purple"],
+  "test": ["test1", "test2", "test3"]
 }
