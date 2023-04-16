@@ -521,5 +521,255 @@
     "zendaya", 
     "zoe kravitz", 
     "zoe saldana"
+  ],
+  "Supernatural": [
+	"dean winchester",
+	"sam winchester",
+	"castiel"
+  ],
+  "Teen Wolf": [
+	"stiles stilinski",
+	"derek hale",
+	"lydia martin",
+	"allison argent",
+	"isaac lahey",
+	"scott mccall",
+	"malia tate",
+	"jackson whittemore",
+	"laura hale",
+	"the nogitsune",
+	"liam dunbar",
+	"peter hale"
+  ],
+  "Narnia": [
+	"edmund pevensie",
+	"peter pevensie",
+	"aslan",
+	"susan pevensie",
+	"reepicheep",
+	"mr tumnus",
+	"lucy pevensie"
+  ],
+  "American Horror Story": [
+	"madison montgomery",
+	"tate langdon",
+	"violet harmon"
+  ],
+  "Arrow": [
+	"oliver queen",
+	"thea queen",
+	"john diggle",
+	"laurel lance",
+	"felicity smoak",
+	"helena bertinelli",
+	"roy harper",
+	"sara lance"
+  ],
+  "Blackish": [
+	"johan johnson"
+  ],
+  "Black Sails": [
+	"anne bonny",
+	"charles vane",
+	"jack rackham",
+	"eleanor guthrie",
+	"james flint",
+	"john silver",
+	"max",
+	"madi",
+	"thomas hamilton"
+  ],
+  "Breaking Bad": [
+	"jesse pinkman",
+	"walter white",
+	"skyler white"
+  ],
+  "Broad City": [
+	"abbi abrams",
+	"ilana wexler",
+	"lincoln rice"
+  ],
+  "Castle": [
+	"richard castle",
+	"kate beckett",
+	"javier esposito",
+	"kevin ryan",
+	"alexis castle"
+  ],
+  "Chuck": [
+	"chuck bartowski",
+	"morgan grimes",
+	"john casey",
+	"ellie bartowski",
+	"sarah walker"
+  ],
+  "Community": [
+	"annie edison",
+	"jeff winger",
+	"troy barnes",
+	"britta perry",
+	"shirley bennett",
+	"pierce hawthorne",
+	"abed nadir",
+	"ben chang"
+  ],
+  "Crazy Ex Girlfriend": [
+	"rebecca bunch",
+	"greg serrano",
+	"heather davis",
+	"josh chan",
+	"paula proctor",
+	"valencia perez"
+  ],
+  "Dare Me": [
+	"beth cassidy",
+	"colette french",
+	"addy hanlon"
+  ],
+  "Dark Angel": [
+	"max guevara",
+	"joshua",
+	"logan cale",
+	"alec mcdowell"
+  ],
+  "Dawson's Creek": [
+	"abby morgan",
+	"jack mcphee",
+	"jen lindley",
+	"joey potter",
+	"pacey witter",
+	"dawson leery",
+	"andie mcphee"
+  ],
+  "Dexter": [
+	"dexter morgan",
+	"debra morgan",
+	"lila tournay",
+	"joey quinn",
+	"james doakes",
+	"hannah mckay",
+	"angel batista",
+	"lumen ann pierce",
+	"maria laguerta",
+	"rita bennett"
+  ],
+  "Dickinson": [
+	"emily dickinson",
+	"susan gilbert"
+  ],
+  "Doctor Who": [
+	"the doctor",
+	"rose tyler",
+	"amy pond",
+	"clara oswald",
+	"river song",
+	"rory williams",
+	"martha jones",
+	"donna noble",
+	"jack harkness",
+	"sally sparrow"
+  ],
+  "Euphoria": [
+	"jules vaughn",
+	"cassie howard",
+	"kat hernandez",
+	"maddy perez",
+	"rue bennett",
+	"lexi howard"
+  ],
+  "Faking It": [
+	"karma ashcroft",
+	"shane harvey",
+	"liam booker",
+	"amy raudenfeld",
+	"lauren cooper"
+  ],
+  "Fringe": [
+	"olivia dunham",
+	"peter bishop",
+	"astrid farnsworth",
+	"walter bishop",
+	"lincoln lee",
+	"charlie francis"
+  ],
+  "From Dusk To Dawn": [
+	"santanico pandemonium"
+  ],
+  "Gilmore Girls": [
+	"lorelai gilmore",
+	"rory gilmore",
+	"luke danes",
+	"lane kim",
+	"emily gilmore",
+	"jess mariano",
+	"dean forester",
+	"paris geller"
+  ],
+  "Girl Meets World": [
+	"riley matthews",
+	"maya hart",
+	"lucas friar",
+	"farkle minkus"
+  ],
+  "Glee": [
+	"rachel berry",
+	"quinn fabray",
+	"finn hudson",
+	"mercedes jones",
+	"tina cohen chang",
+	"artie abrams",
+	"blaine anderson",
+	"kurt hummel",
+	"brittany pierce",
+	"kitty wilde",
+	"jesse st james",
+	"mike chang",
+	"noah puckerman",
+	"sam evans",
+	"sandy ryerson",
+	"santana lopez"
+  ],
+  "Gossip Girl": [
+	"blair waldorf",
+	"dan humphrey",
+	"jenny humphrey",
+	"nate archibald",
+	"serena van der woodsen",
+	"vanessa abrams",
+	"chuck bass"
+  ],
+  "House MD": [
+	"gregory house",
+	"james wilson",
+	"allison cameron",
+	"robert chase",
+	"amber volakis",
+	"eric foreman",
+	"lisa cuddy",
+	"remy hadley"
+  ],
+  "How To Get Away With Murder": [
+	"annalise keating",
+	"asher millstone",
+	"bonnie winterbottom",
+	"connor walsh",
+	"frank delfino",
+	"wes gibbins",
+	"laurel castillo",
+	"michaela pratt",
+	"oliver hampton",
+	"rebecca sutter"
+  ],
+  "I Am Not Okay With This": [
+	"dina",
+	"stanley barber",
+	"sydney novak"
+  ],
+  "In The Flesh": [
+	"amy dyer",
+	"jem walker",
+	"kieren walker",
+	"maxine martin",
+	"simon monroe"
   ]
 }
