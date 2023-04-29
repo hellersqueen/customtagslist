@@ -207,146 +207,143 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
   document.addEventListener('click', (event) => {
     if (event.target === tagButton) {
       console.log('Button clicked!');
-       const lastAddedTag = sessionStorage.getItem('lastCustomTag');
-  if (lastAddedTag) {
-    const tagLabel = document.createElement('span');
-    tagLabel.classList.add('tag-label');
-    tagLabel.setAttribute('draggable', true);
-    tagLabel.textContent = lastAddedTag;
-    const postContainer = document.querySelector('.post-container');
-    const tagInputWrapper = postContainer.querySelector('.tag-input-wrapper');
-    const tagInput = tagInputWrapper.querySelector('.editor-plaintext');
-    const tagLabels = tagInputWrapper.querySelectorAll('.tag-label');
-    if (tagLabels.length > 0) {
-      tagLabels[0].replaceWith(tagLabel);
-    } else {
-      tagInput.appendChild(tagLabel);
-    }
-    sessionStorage.setItem('lastCustomTag', '');
-  }
+      const lastAddedTag = sessionStorage.getItem('lastCustomTag');
+      if (lastAddedTag) {
+        const tagLabel = document.createElement('span');
+        tagLabel.classList.add('tag-label');
+        tagLabel.setAttribute('draggable', true);
+        tagLabel.textContent = lastAddedTag;
+        const postContainer = document.querySelector('.post-container');
+        const tagInputWrapper = postContainer.querySelector('.tag-input-wrapper');
+        const tagInput = tagInputWrapper.querySelector('.editor-plaintext');
+        const tagLabels = tagInputWrapper.querySelectorAll('.tag-label');
+        if (tagLabels.length > 0) {
+          tagLabels[0].replaceWith(tagLabel);
+        } else {
+          tagInput.appendChild(tagLabel);
+        }
+        sessionStorage.setItem('lastCustomTag', '');
+      }
     }
   });
 
-   // add a click event listener to the input to prevent it from losing focus
-inputField.addEventListener('click', (event) => {
-  event.stopPropagation();
-});
+  // add a click event listener to the input to prevent it from losing focus
+  inputField.addEventListener('click', (event) => {
+    event.stopPropagation();
+  });
 
-    const addedTags = JSON.parse(sessionStorage.getItem('addedTags')) || [];
-let lastCustomTag = sessionStorage.getItem('lastCustomTag');
-if (lastCustomTag) {
-  console.log('Last added tag:', lastCustomTag);
-}
-
-function getLastAddedTag() {
-  return sessionStorage.getItem('lastCustomTag');
-}
-
-// Add an input event listener to the custom tag input to show the popover
-let isPopoverShown = false; // Keep track of whether the popover is currently shown
-
-    inputField.addEventListener('input', () => {
-  const tagInputValue = inputField.value.trim();
-  if (!customPopover) {
-    customPopover = document.createElement('div');
-    customPopover.classList.add('custom-popover');
-    document.body.appendChild(customPopover);
+  const addedTags = JSON.parse(sessionStorage.getItem('addedTags')) || [];
+  let lastCustomTag = sessionStorage.getItem('lastCustomTag');
+  if (lastCustomTag) {
+    console.log('Last added tag:', lastCustomTag);
   }
 
-         // Fetch the JSON file
-  fetch('https://raw.githubusercontent.com/hellersqueen/customtagslist/main/my-test-list.json')
-    .then(response => response.json())
-    .then(data => {
-      // Loop through the categories and tags to generate the HTML
-      let customPopoverHTML = '';
-      for (const category in data) {
-        customPopoverHTML += `<div class="custom-popover-header">${category}:</div>`;
-        customPopoverHTML += '<div class="custom-popover-tags">';
-        for (const tag of data[category]) {
-          customPopoverHTML += `<div class="custom-popover-tag"><button>${tag}</button></div>`;
-        }
-        customPopoverHTML += '</div>';
-      }
-      customPopover.innerHTML = customPopoverHTML;
-       // Filter function with sorting
-      const tagWrappers = customPopover.querySelectorAll('.custom-popover-tag');
-      const headerWrappers = customPopover.querySelectorAll('.custom-popover-header');
-      let shownTags = [];
-      let hiddenTags = [];
-      tagWrappers.forEach(wrapper => {
-        const tagText = wrapper.textContent.toLowerCase();
-        if (tagText.startsWith(tagInputValue.toLowerCase())) {
-          shownTags.push(wrapper);
-        } else {
-          hiddenTags.push(wrapper);
-        }
-      });
-      shownTags.forEach(wrapper => {
-        wrapper.classList.remove('hidden');
-      });
-      hiddenTags.forEach(wrapper => {
-        wrapper.classList.add('hidden');
-      });
-      headerWrappers.forEach(header => {
-        const headerTags = header.nextElementSibling.querySelectorAll('.custom-popover-tag');
-        const isHeaderShown = Array.from(headerTags).some(tag => !tag.classList.contains('hidden'));
-        if (!isHeaderShown) {
-          header.classList.add('hidden');
-        } else {
-          header.classList.remove('hidden');
-        }
-      });
+  function getLastAddedTag() {
+    return sessionStorage.getItem('lastCustomTag');
+  }
 
-      const isAnyTagShown = shownTags.length > 0;
-      if (tagInputValue === '' || !isAnyTagShown) {
-        customPopover.classList.remove('active');
-        isPopoverShown = false;
-      } else {
-        customPopover.classList.add('active');
-        const tagInputRect = inputField.getBoundingClientRect();
-        customPopover.style.top = `${tagInputRect.top - customPopover.offsetHeight}px`;
-        customPopover.style.left = `${tagInputRect.left}px`;
-        isPopoverShown = true;
-      }
+  // Add an input event listener to the custom tag input to show the popover
+  let isPopoverShown = false; // Keep track of whether the popover is currently shown
 
-const tagInputWrapper = document.querySelector('[data-js-taginputfieldwrapper]');
-const tagEditor = document.querySelector('.post-form--tag-editor');
-const tagInputField = tagEditor.querySelector('[data-subview="tagInputField"]');
-const editor = tagInputField.querySelector('[data-js-plaintexteditor]');
-const customPopoverTags = customPopover.querySelectorAll('.custom-popover-tag button');
-const tagInput = tagInputWrapper.querySelector('.editor-plaintext');
-const newTag = document.createElement('span');
-
-customPopoverTags.forEach(tag => {
-  tag.addEventListener('click', (event) => {
-    const tagText = event.target.textContent;
-    const tagLabel = document.createElement('span');
-    tagLabel.classList.add('tag-label');
-    tagLabel.setAttribute('draggable', true);
-    tagLabel.textContent = tagText;
-    const tagLabels = tagInputWrapper.querySelectorAll('.tag-label');
-    if (tagLabels.length > 0) {
-      tagLabels[0].replaceWith(tagLabel);
-    } else {
-      tagInput.appendChild(tagLabel);
+  inputField.addEventListener('input', () => {
+    const tagInputValue = inputField.value.trim();
+    if (!customPopover) {
+      customPopover = document.createElement('div');
+      customPopover.classList.add('custom-popover');
+      document.body.appendChild(customPopover);
     }
-    customTagInput.innerHTML = '<input type="text">';
-    customPopover.classList.remove('active');
-    tagInput.focus();
-    setTimeout(() => {
-      tagInput.blur();
-    }, 0);
-    customPopover.classList.remove('active');
-    sessionStorage.setItem('lastCustomTag', tagText);
-    lastCustomTag = tagText;
-    addedTags.push(tagText);
-    sessionStorage.setItem('addedTags', JSON.stringify(addedTags));
-    console.log('Last added tag:', addedTags[addedTags.length - 1]);
+
+    // Fetch the JSON file
+    fetch('https://raw.githubusercontent.com/hellersqueen/customtagslist/main/my-test-list.json')
+      .then(response => response.json())
+      .then(data => {
+        // Loop through the categories and tags to generate the HTML
+        let customPopoverHTML = '';
+        for (const category in data) {
+          customPopoverHTML += `<div class="custom-popover-header">${category}:</div>`;
+          customPopoverHTML += '<div class="custom-popover-tags">';
+          for (const tag of data[category]) {
+            customPopoverHTML += `<div class="custom-popover-tag"><button>${tag}</button></div>`;
+          }
+          customPopoverHTML += '</div>';
+        }
+        customPopover.innerHTML = customPopoverHTML;
+        // Filter function with sorting
+        const tagWrappers = customPopover.querySelectorAll('.custom-popover-tag');
+        const headerWrappers = customPopover.querySelectorAll('.custom-popover-header');
+        let shownTags = [];
+        let hiddenTags = [];
+        tagWrappers.forEach(wrapper => {
+          const tagText = wrapper.textContent.toLowerCase();
+          if (tagText.startsWith(tagInputValue.toLowerCase())) {
+            shownTags.push(wrapper);
+          } else {
+            hiddenTags.push(wrapper);
+          }
+        });
+        shownTags.forEach(wrapper => {
+          wrapper.classList.remove('hidden');
+        });
+        hiddenTags.forEach(wrapper => {
+          wrapper.classList.add('hidden');
+        });
+        headerWrappers.forEach(header => {
+          const headerTags = header.nextElementSibling.querySelectorAll('.custom-popover-tag');
+          const isHeaderShown = Array.from(headerTags).some(tag => !tag.classList.contains('hidden'));
+          if (!isHeaderShown) {
+            header.classList.add('hidden');
+          } else {
+            header.classList.remove('hidden');
+          }
+        });
+
+        const isAnyTagShown = shownTags.length > 0;
+        if (tagInputValue === '' || !isAnyTagShown) {
+          customPopover.classList.remove('active');
+          isPopoverShown = false;
+        } else {
+          customPopover.classList.add('active');
+          const tagInputRect = inputField.getBoundingClientRect();
+          customPopover.style.top = `${tagInputRect.top - customPopover.offsetHeight}px`;
+          customPopover.style.left = `${tagInputRect.left}px`;
+          isPopoverShown = true;
+        }
+
+        const tagInputWrapper = document.querySelector('[data-js-taginputfieldwrapper]');
+        const tagEditor = document.querySelector('.post-form--tag-editor');
+        const tagInputField = tagEditor.querySelector('[data-subview="tagInputField"]');
+        const editor = tagInputField.querySelector('[data-js-plaintexteditor]');
+        const customPopoverTags = customPopover.querySelectorAll('.custom-popover-tag button');
+        const tagInput = tagInputWrapper.querySelector('.editor-plaintext');
+        const newTag = document.createElement('span');
+
+        customPopoverTags.forEach(tag => {
+          tag.addEventListener('click', (event) => {
+            const tagText = event.target.textContent;
+            const tagLabel = document.createElement('span');
+            tagLabel.classList.add('tag-label');
+            tagLabel.setAttribute('draggable', true);
+            tagLabel.textContent = tagText;
+            const tagLabels = tagInputWrapper.querySelectorAll('.tag-label');
+            if (tagLabels.length > 0) {
+              tagLabels[0].replaceWith(tagLabel);
+            } else {
+              tagInput.appendChild(tagLabel);
+            }
+            customTagInput.innerHTML = '<input type="text">';
+            customPopover.classList.remove('active');
+            tagInput.focus();
+            setTimeout(() => {
+              tagInput.blur();
+            }, 0);
+            customPopover.classList.remove('active');
+            sessionStorage.setItem('lastCustomTag', tagText);
+            lastCustomTag = tagText;
+            addedTags.push(tagText);
+            sessionStorage.setItem('addedTags', JSON.stringify(addedTags));
+            console.log('Last added tag:', addedTags[addedTags.length - 1]);
+          });
+        });
+      });
   });
-});
-
-
-
-});
-});
 });
