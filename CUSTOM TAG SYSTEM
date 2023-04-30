@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         custom tag system
+// @name         CUSTOM TAG SYSTEM
 // @namespace    http://tampermonkey/
 // @version      9
 // @description  new tag input with button
@@ -208,7 +208,7 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
   document.addEventListener('click', (event) => {
     if (event.target === tagButton) {
       console.log('Button clicked!');
-      const lastAddedTag = sessionStorage.getItem('lastCustomTag');
+      const lastAddedTag = localStorage.getItem('lastCustomTag');
       if (lastAddedTag) {
         const tagLabel = document.createElement('span');
         tagLabel.classList.add('tag-label');
@@ -223,7 +223,7 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
         } else {
           tagInput.appendChild(tagLabel);
         }
-        sessionStorage.setItem('lastCustomTag', '');
+        localStorage.setItem('lastCustomTag', '');
       }
     }
   });
@@ -233,14 +233,14 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
     event.stopPropagation();
   });
 
-  const addedTags = JSON.parse(sessionStorage.getItem('addedTags')) || [];
-  let lastCustomTag = sessionStorage.getItem('lastCustomTag');
-  if (lastCustomTag) {
+  const addedTags = JSON.parse(localStorage.getItem('addedTags')) || [];
+  let lastCustomTag = localStorage.getItem('lastCustomTag');
+  if (lastCustomTag !== '') {
     console.log('Last added tag:', lastCustomTag);
   }
 
   function getLastAddedTag() {
-    return sessionStorage.getItem('lastCustomTag');
+    return localStorage.getItem('lastCustomTag');
   }
 
   // Add an input event listener to the custom tag input to show the popover
@@ -354,11 +354,10 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
             setTimeout(() => {
               tagInput.blur();
             }, 0);
-            customPopover.classList.remove('active');
-            sessionStorage.setItem('lastCustomTag', tagText);
+            localStorage.setItem('lastCustomTag', tagText);
             lastCustomTag = tagText;
             addedTags.push(tagText);
-            sessionStorage.setItem('addedTags', JSON.stringify(addedTags));
+            localStorage.setItem('addedTags', JSON.stringify(addedTags));
             console.log('Last added tag:', addedTags[addedTags.length - 1]);
           });
         });
