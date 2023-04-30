@@ -115,6 +115,7 @@ GM_addStyle(`
   color: #337ab7;
 }
 
+
 .post-container {
   position: relative;
   z-index: 1; /* set the z-index lower than the popover */
@@ -247,11 +248,18 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
 
   inputField.addEventListener('input', () => {
     const tagInputValue = inputField.value.trim();
-    if (!customPopover) {
+    if (tagInputValue && !customPopover) {
       customPopover = document.createElement('div');
       customPopover.classList.add('custom-popover');
       document.body.appendChild(customPopover);
+      isPopoverShown = true;
+    } else if (!tagInputValue && customPopover) {
+      customPopover.remove();
+      customPopover = null;
+      isPopoverShown = false;
     }
+
+
 
     // Fetch the JSON file
     fetch('https://raw.githubusercontent.com/hellersqueen/customtagslist/main/my-test-list.json')
@@ -268,46 +276,53 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
           customPopoverHTML += '</div>';
         }
         customPopover.innerHTML = customPopoverHTML;
-        // Filter function with sorting
-        const tagWrappers = customPopover.querySelectorAll('.custom-popover-tag');
-        const headerWrappers = customPopover.querySelectorAll('.custom-popover-header');
-        let shownTags = [];
-        let hiddenTags = [];
-        tagWrappers.forEach(wrapper => {
-          const tagText = wrapper.textContent.toLowerCase();
-          if (tagText.startsWith(tagInputValue.toLowerCase())) {
-            shownTags.push(wrapper);
-          } else {
-            hiddenTags.push(wrapper);
-          }
-        });
-        shownTags.forEach(wrapper => {
-          wrapper.classList.remove('hidden');
-        });
-        hiddenTags.forEach(wrapper => {
-          wrapper.classList.add('hidden');
-        });
-        headerWrappers.forEach(header => {
-          const headerTags = header.nextElementSibling.querySelectorAll('.custom-popover-tag');
-          const isHeaderShown = Array.from(headerTags).some(tag => !tag.classList.contains('hidden'));
-          if (!isHeaderShown) {
-            header.classList.add('hidden');
-          } else {
-            header.classList.remove('hidden');
-          }
-        });
 
-        const isAnyTagShown = shownTags.length > 0;
-        if (tagInputValue === '' || !isAnyTagShown) {
-          customPopover.classList.remove('active');
-          isPopoverShown = false;
-        } else {
-          customPopover.classList.add('active');
-          const tagInputRect = inputField.getBoundingClientRect();
-          customPopover.style.top = `${tagInputRect.top - customPopover.offsetHeight}px`;
-          customPopover.style.left = `${tagInputRect.left}px`;
-          isPopoverShown = true;
+
+        if (customPopover) {
+          // Filter function with sorting
+          const tagWrappers = customPopover.querySelectorAll('.custom-popover-tag');
+          const headerWrappers = customPopover.querySelectorAll('.custom-popover-header');
+          let shownTags = [];
+          let hiddenTags = [];
+          tagWrappers.forEach(wrapper => {
+            const tagText = wrapper.textContent.toLowerCase();
+            if (tagText.startsWith(tagInputValue.toLowerCase())) {
+              shownTags.push(wrapper);
+            } else {
+              hiddenTags.push(wrapper);
+            }
+          });
+          shownTags.forEach(wrapper => {
+            wrapper.classList.remove('hidden');
+          });
+          hiddenTags.forEach(wrapper => {
+            wrapper.classList.add('hidden');
+          });
+          headerWrappers.forEach(header => {
+            const headerTags = header.nextElementSibling.querySelectorAll('.custom-popover-tag');
+            const isHeaderShown = Array.from(headerTags).some(tag => !tag.classList.contains('hidden'));
+            if (!isHeaderShown) {
+              header.classList.add('hidden');
+            } else {
+              header.classList.remove('hidden');
+            }
+          });
+
+          const isAnyTagShown = shownTags.length > 0;
+          if (isAnyTagShown) {
+            customPopover.classList.add('active');
+            const tagInputRect = inputField.getBoundingClientRect();
+            customPopover.style.top = `${tagInputRect.top - customPopover.offsetHeight}px`;
+            customPopover.style.left = `${tagInputRect.left}px`;
+            isPopoverShown = true;
+          } else {
+            customPopover.classList.remove('active');
+            customPopover.remove();
+            customPopover = null;
+            isPopoverShown = false;
+          }
         }
+
 
         const tagInputWrapper = document.querySelector('[data-js-taginputfieldwrapper]');
         const tagEditor = document.querySelector('.post-form--tag-editor');
@@ -332,6 +347,9 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
             }
             customTagInput.innerHTML = '<input type="text">';
             customPopover.classList.remove('active');
+            customPopover.remove();
+            customPopover = null;
+            isPopoverShown = false;
             tagInput.focus();
             setTimeout(() => {
               tagInput.blur();
@@ -343,6 +361,18 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
             sessionStorage.setItem('addedTags', JSON.stringify(addedTags));
             console.log('Last added tag:', addedTags[addedTags.length - 1]);
           });
+        });
+
+
+        // Add a click event listener to the document to hide the popover when user clicks outside the custom tag input or when the custom tag input field is empty and out of focus
+        document.addEventListener('click', event => {
+          const customTagInput = document.querySelector('.custom-tag-input input');
+          if (isPopoverShown && !inputField.contains(event.target) && !customPopover.contains(event.target) && customTagInput.value.trim() === '') {
+            customPopover.classList.remove('active');
+            customPopover.remove();
+            customPopover = null;
+            isPopoverShown = false;
+          }
         });
       });
   });
