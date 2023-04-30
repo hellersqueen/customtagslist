@@ -204,6 +204,12 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
   const tagEditor = postFooter.querySelector('.post-form--tag-editor');
   tagEditor.insertBefore(customTagInput, tagEditor.firstChild);
 
+  // retrieve the last added tag from local storage and log it to the console
+  const lastCustomTag = localStorage.getItem('lastCustomTag');
+  if (lastCustomTag) {
+    console.log('Last added tag:', lastCustomTag);
+  }
+
   // add event listener to document object
   document.addEventListener('click', (event) => {
     if (event.target === tagButton) {
@@ -223,21 +229,26 @@ waitForKeyElements('.post-form--footer', (postFooter) => {
         } else {
           tagInput.appendChild(tagLabel);
         }
-        localStorage.setItem('lastCustomTag', '');
       }
     }
   });
+  // add event listener to inputField
+  inputField.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      console.log('Custom tag added:', inputField.value);
+      const addedTags = JSON.parse(localStorage.getItem('addedTags')) || [];
+      addedTags.push(inputField.value);
+      localStorage.setItem('addedTags', JSON.stringify(addedTags));
+      localStorage.setItem('lastCustomTag', inputField.value);
+      inputField.value = '';
+    }
+  });
+
 
   // add a click event listener to the input to prevent it from losing focus
   inputField.addEventListener('click', (event) => {
     event.stopPropagation();
   });
-
-  const addedTags = JSON.parse(localStorage.getItem('addedTags')) || [];
-  let lastCustomTag = localStorage.getItem('lastCustomTag');
-  if (lastCustomTag !== '') {
-    console.log('Last added tag:', lastCustomTag);
-  }
 
   function getLastAddedTag() {
     return localStorage.getItem('lastCustomTag');
