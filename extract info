@@ -1,0 +1,89 @@
+// ==UserScript==
+// @name         Tumblr Duplicate Post Finder
+// @namespace    http://tampermonkey/
+// @version      1
+// @description  Finds duplicate posts on Tumblr blog
+// @author       Ehly & ChatGPT
+// @match        https://getbacktofandomlife.tumblr.com/*
+// @grant        GM_xmlhttpRequest
+// @require      https://code.jquery.com/jquery-3.6.0.min.js
+// ==/UserScript==
+
+(function () {
+    'use strict';
+
+    // Function to extract the URLs, original poster name, reblogged post URL, and post body content
+    function extractData() {
+        const articles = document.querySelectorAll('article');
+        const data = [];
+
+        articles.forEach((article) => {
+            const originalPostLink = article.querySelector('.post-reblog-trail-item.original-reblog-content a.post-tumblelog-name');
+            const rebloggedPostLink = article.querySelector('.date-note-wrapper a.meta-item.post-date');
+
+            if (rebloggedPostLink) {
+                const rebloggedPostURL = rebloggedPostLink.href;
+
+                if (originalPostLink) {
+                    const originalPostURL = originalPostLink.href;
+                    const postBodyElement = article.querySelector('.post-body');
+                    const postBodyContent = postBodyElement ? postBodyElement.innerHTML : '';
+                    data.push({ originalPostURL, postBodyContent, rebloggedPostURL });
+                } else {
+                    const originalPostUsernameElement = article.querySelector('.post-reblog-trail-item.original-reblog-content span.inactive.post-tumblelog-name');
+                    const originalPostUsername = originalPostUsernameElement ? originalPostUsernameElement.textContent : '';
+                    const postBodyElement = article.querySelector('.post-body');
+                    const postBodyContent = postBodyElement ? postBodyElement.innerHTML : '';
+                    data.push({ originalPostUsername, postBodyContent, rebloggedPostURL });
+                }
+            }
+        });
+
+        return data;
+    }
+
+    // Function to save the data to a local file
+    function saveDataToFile(data) {
+        const fileData = JSON.stringify(data);
+        const fileName = 'page.json';
+
+        const blob = new Blob([fileData], { type: 'application/json' });
+
+        if (window.navigator.msSaveOrOpenBlob) {
+            // For IE or Edge browser
+            window.navigator.msSaveOrOpenBlob(blob, fileName);
+        } else {
+            // For other browsers
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = fileName;
+            downloadLink.click();
+        }
+    }
+
+    // Function to check if all posts have loaded and extract the data
+    function checkForAllPosts(mutationsList, observer) {
+        const desiredPostCount = 10;
+        const articles = document.querySelectorAll('article');
+
+        if (articles.length >= desiredPostCount) {
+            const extractedData = extractData();
+            console.log('Extracted Data:', extractedData);
+
+            // Save the data to a local file
+            saveDataToFile(extractedData);
+
+            console.log('Script is no longer running.');
+            observer.disconnect(); // Stop observing mutations
+        }
+    }
+
+    // Start running the script
+    console.log('Script started running...');
+
+    // Create a MutationObserver to detect changes in the DOM
+    const observer = new MutationObserver(checkForAllPosts);
+
+    // Observe changes to the entire document
+    observer.observe(document, { childList: true, subtree: true });
+})();
