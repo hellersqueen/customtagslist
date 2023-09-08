@@ -2,80 +2,162 @@
 
 /* Custom Popover Styles */
 .custom-popover {
-  /* ... */
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-y: auto;
+  z-index: 9999;
+  pointer-events: auto;
+  width: 184px;
+  top: 0;
+  left: 0;
 }
 
 .custom-popover::-webkit-scrollbar {
-  /* ... */
+  width: 10px;
 }
 
 .custom-popover::-webkit-scrollbar-thumb {
-  /* ... */
+  background-color: #acacac;
+  border-radius: 5px;
 }
 
 .custom-popover::-webkit-scrollbar-track {
-  /* ... */
+  background-color: #f2f2f2;
+  border-radius: 5px;
 }
 
 .custom-popover.no-results {
-  /* ... */
+  display: none !important;
 }
 
 .custom-popover.active {
-  /* ... */
+  display: block;
 }
 
 .custom-popover-header {
-  /* ... */
+  margin-bottom: 8px;
+  border: 0;
+  border-top: 1px solid #f2f2f2;
+  border-bottom: 1px solid #f2f2f2;
+  color: #333366;
+  text-shadow: none;
+  background: #f2f2f2;
+  box-shadow: none;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 0 12px;
+  line-height: 23px;
+  height: 24px;
 }
 
 .custom-popover-tag {
-  /* ... */
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+  width: 85%;
+  text-align: left;
+  color: #000;
+  transition: all 0.2s ease-in-out;
+  padding: 5px 15px;
+  vertical-align: baseline;
 }
 
 .custom-popover-tag:hover {
-  /* ... */
+  background-color: #f3f3f3;
 }
 
 .custom-popover-tag:active {
-  /* ... */
+  background-color: #ddd;
+  color: #fff;
 }
 
 .custom-popover-tag span {
-  /* ... */
+  flex: 1;
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .custom-popover-tag button {
-  /* ... */
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  color: #3e4a57;
+  cursor: pointer;
 }
 
 .custom-popover-tag button:hover {
-  /* ... */
+  color: #337ab7;
 }
 
 /* Post Container Styles */
 .post-container {
-  /* ... */
+  position: relative;
+  z-index: 1
 }
 
 /* Custom Tag Input Styles */
 .custom-tag-input {
-  /* ... */
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  margin-left: 10px;
+  margin: 0 auto;
+  max-width: 520px;
 }
 
 .custom-tag-input input {
-  /* ... */
+  flex-grow: 1;
+  border: none;
+  font-size: 14px;
+  line-height: 20px;
+  outline: none;
+  padding: 5px 10px;
+  border: 1px solid #D9D9D9;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #5F9EA0;
 }
 
 .custom-tag-input input:focus {
-  /* ... */
+  box-shadow: 1px #BFBFBF;
 }
 
 /* Custom Tag Button Styles */
 .custom-tag-button {
-  /* ... */
+  background-color: #f2f2f2 !important;
+  border: 1px solid #D9D9D9 !important;
+  border-radius: 4px;
+  margin-left: 10px !important;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  padding: 1px 12px !important;
+  height: 24px;
+  line-height: 22px;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 1px #BFBFBF !important;
+  display: inline-block !important;
 }
 
 .custom-tag-button:hover {
-  /* ... */
+  background-color: #333366;
+  color: #f2f2f2;
 }
