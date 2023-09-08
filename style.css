@@ -1,0 +1,81 @@
+/* style.css */
+
+/* Custom Popover Styles */
+.custom-popover {
+  /* ... */
+}
+
+.custom-popover::-webkit-scrollbar {
+  /* ... */
+}
+
+.custom-popover::-webkit-scrollbar-thumb {
+  /* ... */
+}
+
+.custom-popover::-webkit-scrollbar-track {
+  /* ... */
+}
+
+.custom-popover.no-results {
+  /* ... */
+}
+
+.custom-popover.active {
+  /* ... */
+}
+
+.custom-popover-header {
+  /* ... */
+}
+
+.custom-popover-tag {
+  /* ... */
+}
+
+.custom-popover-tag:hover {
+  /* ... */
+}
+
+.custom-popover-tag:active {
+  /* ... */
+}
+
+.custom-popover-tag span {
+  /* ... */
+}
+
+.custom-popover-tag button {
+  /* ... */
+}
+
+.custom-popover-tag button:hover {
+  /* ... */
+}
+
+/* Post Container Styles */
+.post-container {
+  /* ... */
+}
+
+/* Custom Tag Input Styles */
+.custom-tag-input {
+  /* ... */
+}
+
+.custom-tag-input input {
+  /* ... */
+}
+
+.custom-tag-input input:focus {
+  /* ... */
+}
+
+/* Custom Tag Button Styles */
+.custom-tag-button {
+  /* ... */
+}
+
+.custom-tag-button:hover {
+  /* ... */
+}
