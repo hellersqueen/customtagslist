@@ -1,0 +1,1306 @@
+// ==UserScript==
+// @name         TUMBLR LINKED TAGS
+// @namespace    http://tampermonkey.net/
+// @version      00001
+// @description  Automatically add tags to Tumblr posts
+// @author       Lily & ChatGPT
+// @match        https://www.tumblr.com/*
+// @grant        GM_addStyle
+// @require      https://code.jquery.com/jquery-3.6.0.min.js
+// ==/UserScript==
+
+function dom(tagName, attributes = {}, events = {}, children = []) {
+  const element = attributes?.xmlns
+    ? document.createElementNS(attributes.xmlns, tagName)
+    : document.createElement(tagName);
+
+  attributes && Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, value));
+  events && Object.entries(events).forEach(([type, listener]) => element.addEventListener(type, listener));
+  children && element.replaceChildren(...children);
+
+  element.normalize();
+  return element;
+}
+
+const { nonce } = [...document.scripts].find(script => script.getAttributeNames().includes('nonce'));
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+const inject = async (func, args = [], target = document.documentElement) => {
+  const name = `xkit$${func.name || 'injected'}`;
+  const async = func instanceof AsyncFunction;
+
+  const script = dom('script', { nonce }, null, [`{
+    const { dataset } = document.currentScript;
+    const ${name} = ${func.toString()};
+    const returnValue = ${name}(...${JSON.stringify(args)});
+    ${async
+      ? `returnValue
+          .then(result => { dataset.result = JSON.stringify(result || null); })
+          .catch(exception => { dataset.exception = JSON.stringify({
+            message: exception.message,
+            name: exception.name,
+            stack: exception.stack,
+            ...exception
+          })})
+        `
+      : 'dataset.result = JSON.stringify(returnValue || null);'
+    }
+  }`]);
+
+  if (async) {
+    return new Promise((resolve, reject) => {
+      const attributeObserver = new MutationObserver((mutations, observer) => {
+        if (mutations.some(({ attributeName }) => attributeName === 'data-result')) {
+          observer.disconnect();
+          resolve(JSON.parse(script.dataset.result));
+        } else if (mutations.some(({ attributeName }) => attributeName === 'data-exception')) {
+          observer.disconnect();
+          reject(JSON.parse(script.dataset.exception));
+        }
+      });
+
+      attributeObserver.observe(script, {
+        attributes: true,
+        attributeFilter: ['data-result', 'data-exception']
+      });
+      target.append(script);
+      script.remove();
+    });
+  } else {
+    target.append(script);
+    script.remove();
+    return JSON.parse(script.dataset.result);
+  }
+};
+
+const controlTagsInput = async ({ add, remove }) => {
+  add = add.map(tag => tag.trim()).filter((tag, index, array) => array.indexOf(tag) === index);
+
+  const selectedTagsElement = document.getElementById('selected-tags');
+  if (!selectedTagsElement) { return; }
+
+  const reactKey = Object.keys(selectedTagsElement).find(key => key.startsWith('__reactFiber'));
+  let fiber = selectedTagsElement[reactKey];
+
+  while (fiber !== null) {
+    let tags = fiber.stateNode?.state?.tags;
+    if (Array.isArray(tags)) {
+      tags.push(...add.filter(tag => tags.includes(tag) === false));
+      tags = tags.filter(tag => remove.includes(tag) === false);
+      fiber.stateNode.setState({ tags });
+      break;
+    } else {
+      fiber = fiber.return;
+    }
+  }
+};
+
+const editPostFormTags = async ({ add = [], remove = [] }) => inject(controlTagsInput, [{ add, remove }]);
+
+const linkedTags = {
+  "test": ["test1", "test2", "test3"],
+      "tasm": ["marvel"],
+      "x-men": ["marvel"],
+      "me": ["txt"],
+      "psd": ["photoshop"],
+      "ps tutorial": ["photoshop"],
+      "ps actions": ["photoshop"],
+      "fonts": ["photoshop"],
+      "textures": ["photoshop"],
+
+      // *marvel
+      "mcu": ["marvel"],
+      "hulk": ["mcu", "marvel"],
+      "captain america": ["mcu", "marvel"],
+      "ant man": ["mcu", "marvel"],
+      "iron man": ["mcu", "marvel"],
+      "black panther": ["mcu", "marvel"],
+      "thor": ["mcu", "marvel"],
+      "gotg": ["mcu", "marvel"],
+      "doctor strange": ["mcu", "marvel"],
+	  "the avengers": ["mcu", "marvel"],
+      "spider man": ["mcu", "marvel"],
+	  "black widow": ["mcu", "marvel"],
+      "captain marvel": ["mcu", "marvel"],
+	  "shang chi": ["mcu", "marvel"],
+      "eternals": ["mcu", "marvel"],
+
+      // *netflix's marvel
+      "netflix's daredevil": ["marvel"],
+      "netflix's jessica jones": ["marvel"],
+      "netflix's luke cage": ["marvel"],
+      "netflix's the defenders": ["marvel"],
+      "netflix's iron fist": ["marvel"],
+      "netflix's the punisher": ["marvel"],
+      "jessica jones": ["netflix's jessica jones", "netflix's the defenders", "marvel"],
+      "frank castle": ["netflix's daredevil", "netflix's the punisher", "marvel"],
+      "luke cage": ["netflix's luke cage", "netflix's the defenders", "marvel"],
+      "jeri hogarth": ["netflix's jessica jones", "marvel"],
+      "misty knight": ["netflix's luke cage", "netflix's the defenders", "marvel"],
+      "matt murdock": ["netflix's daredevil", "netflix's the defenders", "marvel"],
+      "elektra natchios": ["netflix's daredevil", "netflix's the defenders", "marvel"],
+      "foggy nelson": ["netflix's daredevil", "netflix's the defenders", "marvel"],
+      "karen page": ["netflix's daredevil", "netflix's the defenders", "netflix's the punisher", "marvel"],
+      "danny rand" : ["netflix's iron fist", "netflix's the defenders", "marvel"],
+      "claire temple": ["netflix's daredevil", "netflix's luke cage", "marvel"],
+      "trish walker": ["netflix's jessica jones", "netflix's the defenders", "marvel"],
+      "malcolm ducasse": ["netflix's jessica jones", "marvel"],
+      "colleen wing": ["netflix's iron fist", "netflix's the defenders", "marvel"],
+      "frank x karen": ["netflix's daredevil", "netflix's the punisher", "marvel"],
+      "luke x jessica": ["netflix's jessica jones", "netflix's the defenders", "marvel"],
+      "danny & luke": ["netflix's the defenders", "marvel"],
+
+     // *supernatural
+      "dean winchester": ["spn"],
+      "sam winchester": ["spn"],
+      "castiel": ["spn"],
+      "charlie bradbury": ["spn"],
+      "spn art": ["spn"],
+      "jo harvelle": ["spn"],
+      "ellen harvelle": ["spn"],
+	  "gabriel": ["spn"],
+      "ruby": ["spn"],
+	  "ash": ["spn"],
+	  "eve": ["spn"],
+	  "meg": ["spn"],
+	  "crowley": ["spn"],
+	  "benny": ["spn"],
+	  "cassie robinson": ["spn"],
+	  "bela talbot": ["spn"],
+	  "sarah blake": ["spn"],
+	  "lilith": ["spn"],
+	  "alastair": ["spn"],
+	  "balthazar": ["spn"],
+	  "lucifer": ["spn"],
+      "abaddon": ["spn"],
+	  "dean smith": ["spn"],
+      "lily baker": ["spn"],
+	  "becky rosen": ["spn"],
+	  "kevin tran": ["spn"],
+	  "adam milligan": ["spn"],
+	  "rufus turner": ["spn"],
+	  "azazel": ["spn"],
+	  "jimmy novak": ["spn"],
+	  "claire novak": ["spn"],
+	  "hael": ["spn"],
+	  "lisa braeden": ["spn"],
+	  "tracy bell": ["spn"],
+	  "andy gallagher": ["spn"],
+	  "pamela barnes": ["spn"],
+	  "missouri moseley": ["spn"],
+	  "jessica moore": ["spn"],
+	  "bobby singer": ["spn"],
+	  "anna milton": ["spn"],
+	  "john winchester": ["spn"],
+	  "mary winchester": ["spn"],
+	  "chuck shurley": ["spn"],
+	  "linda tran": ["spn"],
+	  "molly mcnamara": ["spn"],
+	  "team free will": ["spn"],
+	  "destiel": ["spn"],
+	  "sam x meg": ["spn"],
+	  "dean x jo": ["spn"],
+      "sam & dean": ["spn"],
+      "sam & cas": ["spn"],
+
+      // *teen wolf
+      // **characters
+      "scott mccall": ["teen wolf"],
+      "stiles stilinski": ["teen wolf"],
+      "allison argent": ["teen wolf"],
+      "derek hale": ["teen wolf"],
+      "lydia martin": ["teen wolf"],
+      "kira yukimura": ["teen wolf"],
+      "isaac lahey": ["teen wolf"],
+      "malia tate": ["teen wolf"],
+      "jackson whittemore": ["teen wolf"],
+      "laura hale": ["teen wolf"],
+      "the nogitsune": ["teen wolf"],
+      "liam dunbar": ["teen wolf"],
+      "peter hale": ["teen wolf"],
+      "jennifer blake": ["teen wolf"],
+      "erica reyes": ["teen wolf"],
+      "cora hale": ["teen wolf"],
+      "vernon boyd": ["teen wolf"],
+      "braeden": ["teen wolf"],
+	  "coach finstock": ["teen wolf"],
+	  "caitlin": ["teen wolf"],
+      // **relationships
+	  "sterek": ["teen wolf"],
+	  "stydia": ["teen wolf"],
+	  "boyd x erica": ["teen wolf"],
+      "scallison": ["teen wolf"],
+      "scallisaac": ["teen wolf"],
+      "allison x isaac": ["teen wolf"],
+	  "scott x isaac": ["teen wolf"],
+      "scott x kira": ["teen wolf"],
+      "stiles & allison": ["teen wolf"],
+      "isaac & erica": ["teen wolf"],
+      "allison & lydia": ["teen wolf"],
+      "allison & scott & stiles": ["teen wolf"],
+      "allydia": ["teen wolf art", "teen wolf"],
+      // **families
+      "chris & allison": ["teen wolf"],
+      "the argents": ["teen wolf"],
+      "allison & kate": ["teen wolf"],
+
+
+      // *buffy the vampire slayer / angel
+      "buffy summers": ["btvs"],
+      "dawn summers": ["btvs"],
+      "spike": ["btvs"],
+	  "charles gunn": ["ats"],
+	  "xander harris": ["btvs"],
+      "willow rosenberg": ["btvs"],
+	  "tara maclay": ["btvs"],
+	  "anya jenkins": ["btvs"],
+      "rupert giles": ["btvs"],
+	  "daniel osbourne": ["btvs"],
+	  "winifred burkle": ["ats"],
+	  "connor": ["ats"],
+      "lorne": ["ats"],
+      "angel": ["btvs", "ats"],
+      "faith lehane": ["btvs", "ats"],
+	  "lilah morgan": ["ats"],
+	  "anyanka": ["btvs"],
+	  "dark willow": ["btvs"],
+	  "andrew wells": ["btvs"],
+	  "kendra young": ["btvs"],
+	  "cassie newton": ["btvs"],
+	  "joyce summers": ["btvs"],
+	  "glory": ["btvs"],
+	  "jenny calendar": ["btvs"],
+	  "buffybot": ["btvs"],
+	  "principal snyder": ["btvs"],
+	  "illyria": ["ats"],
+	  "the scooby gang": ["btvs"],
+	  "spuffy": ["btvs"],
+      "willow x tara": ["btvs"],
+      "buffy x faith": ["btvs"],
+	  "willow x oz": ["btvs"],
+      "xander x cordelia": ["btvs"],
+	  "spike x drusilla": ["btvs"],
+
+      // *julie and the phantoms
+      "julie molina": ["jatp"],
+      "luke patterson": ["jatp"],
+	  "alex mercer": ["jatp"],
+	  "reggie peters": ["jatp"],
+	  "flynn taylor": ["jatp"],
+	  "carrie wilson": ["jatp"],
+	  "nick": ["jatp"],
+	  "trevor wilson": ["jatp"],
+	  "willie": ["jatp"],
+	  "caleb covington": ["jatp"],
+	  "carlos molina": ["jatp"],
+	  "ray molina": ["jatp"],
+	  "julie x luke": ["jatp"],
+
+      // *narnia
+      "peter pevensie": ["narnia"],
+      "susan pevensie": ["narnia"],
+      "edmund pevensie": ["narnia"],
+      "lucy pevensie": ["narnia"],
+      "aslan": ["narnia"],
+      "reepicheep": ["narnia"],
+      "mr tumnus": ["narnia"],
+      "the pevensies": ["narnia"],
+	  "maugrim": ["narnia"],
+	  "jill pole": ["narnia"],
+      "caspian x": ["narnia"],
+	  "eustace scrubb": ["narnia"],
+
+      // *brooklyn nine nine
+      "jake peralta": ["b99"],
+      "amy santiago": ["b99"],
+	  "charles boyle": ["b99"],
+	  "gina linetti": ["b99"],
+	  "rosa diaz": ["b99"],
+	  "raymond holt": ["b99"],
+	  "terry jeffords": ["b99"],
+	  "doug judy": ["b99"],
+	  "adrian pimento": ["b99"],
+      "amy & rosa": ["b99"],
+	  "jake x amy": ["b99"],
+      "jake & charles": ["b99"],
+
+      // *the good place
+      "tahani al jamil": ["the good place"],
+	  "chidi anagonye": ["the good place"],
+	  "eleanor shellstrop": ["the good place"],
+      "michael": ["the good place"],
+      "janet": ["the good place"],
+	  "jason mendoza": ["the good place"],
+	  "team cockroach": ["the good place"],
+	  "jason x janet": ["the good place"],
+	  "eleanor x chidi": ["the good place"],
+
+      // *merlin
+      "merlin": ["bbc merlin"],
+      "merlin art": ["bbc merlin"],
+      "arthur pendragon": ["bbc merlin"],
+	  "morgana": ["bbc merlin"],
+	  "guinevere pendragon": ["bbc merlin"],
+	  "mordred": ["bbc merlin"],
+	  "sir gwaine": ["bbc merlin"],
+	  "sir lancelot": ["bbc merlin"],
+      "sir elyan": ["bbc merlin"],
+      "sir leon": ["bbc merlin"],
+      "sir percival": ["bbc merlin"],
+	  "arthur & morgana": ["bbc merlin"],
+      "merlin & gwaine": ["bbc merlin"],
+      "merlin & gaius": ["bbc merlin"],
+      "merlin & gwen": ["bbc merlin"],
+      "merlin & morgana": ["bbc merlin"],
+      "morgana & mordred": ["bbc merlin"],
+      "merthur": ["bbc merlin"],
+      "arthur x gwen": ["bbc merlin"],
+      "lancelot x gwen": ["bbc merlin"],
+      "morgana x gwen": ["bbc merlin"],
+
+      // *hamilton
+      "alexander hamilton": ["hamilton"],
+      "aaron burr": ["hamilton"],
+	  "eliza schuyler": ["hamilton"],
+	  "angelica schuyler": ["hamilton"],
+	  "peggy schuyler": ["hamilton"],
+	  "john laurens": ["hamilton"],
+	  "hercules mulligan": ["hamilton"],
+	  "lafayette": ["hamilton"],
+	  "george washington": ["hamilton"],
+	  "thomas jefferson": ["hamilton"],
+	  "james madison": ["hamilton"],
+	  "philip hamilton": ["hamilton"],
+	  "maria reynolds": ["hamilton"],
+	  "james reynolds": ["hamilton"],
+
+      // *fruits basket
+      "tohru honda": ["fruits basket"],
+	  "yuki sohma": ["fruits basket"],
+	  "shigure sohma": ["fruits basket"],
+	  "hatori sohma": ["fruits basket"],
+	  "momiji sohma": ["fruits basket"],
+	  "ritsu sohma": ["fruits basket"],
+	  "kagura sohma": ["fruits basket"],
+	  "machi kuragi": ["fruits basket"],
+	  "kyoru": ["fruits basket"],
+
+      // *game of thrones
+      "jon snow": ["game of thrones"],
+      "daenerys targaryen": ["game of thrones"],
+	  "sansa stark": ["game of thrones"],
+	  "tyrion lannister": ["game of thrones"],
+	  "arya stark": ["game of thrones"],
+	  "bran stark": ["game of thrones"],
+	  "jojen reed": ["game of thrones"],
+	  "meera reed": ["game of thrones"],
+	  "robb stark": ["game of thrones"],
+	  "brienne of tarth": ["game of thrones"],
+	  "catelyn stark": ["game of thrones"],
+	  "eddard stark": ["game of thrones"],
+	  "ygritte": ["game of thrones"],
+	  "cersei lannister": ["game of thrones"],
+	  "jaime lannister": ["game of thrones"],
+	  "sandor clegane": ["game of thrones"],
+	  "oberyn martell": ["game of thrones"],
+	  "joffrey baratheon": ["game of thrones"],
+	  "stannis baratheon": ["game of thrones"],
+	  "renly baratheon": ["game of thrones"],
+	  "theon greyjoy": ["game of thrones"],
+	  "viserys targaryen": ["game of thrones"],
+	  "shae": ["game of thrones"],
+
+      // *star wars
+      "original trilogy": ["sw"],
+      "prequel trilogy": ["sw"],
+      "sequel trilogy": ["sw"],
+	  "rogue one": ["sw"],
+	  "anakin skywalker": ["darth vader","prequel trilogy","sw"],
+	  "darth vader": ["original trilogy","sw"],
+	  "obi wan kenobi": ["prequel trilogy","sw"],
+	  "luke skywalker": ["original trilogy","sequel trilogy","sw"],
+	  "leia organa": ["original trilogy","sequel trilogy","sw"],
+	  "han solo": ["original trilogy","sequel trilogy","sw"],
+	  "lando calrissian": ["original trilogy","sequel trilogy","sw"],
+	  "rey": ["sequel trilogy", "sw"],
+	  "finn": ["sequel trilogy", "sw"],
+	  "padmé amidala": ["prequel trilogy","sw"],
+	  "yoda": ["prequel trilogy","original trilogy","sw"],
+      "emperor palpatine": ["prequel trilogy","original trilogy","sequel trilogy","sw"],
+      "han x leia": ["original trilogy","sequel trilogy","sw"],
+
+      // *the maze runner
+	  "thomas": ["tmr series"],
+	  "alby": ["tmr series"],
+	  "jeff": ["tmr series"],
+	  "gally": ["tmr series"],
+	  "winston": ["tmr series"],
+	  "brenda": ["tmr series"],
+	  "teresa agnes": ["tmr series"],
+	  "zart": ["tmr series"],
+	  "frypan": ["tmr series"],
+	  "newt": ["tmr series"],
+	  "minho": ["tmr series"],
+	  "thomesa": ["tmr series"],
+	  "newtmas": ["tmr series"],
+
+      // *the hunger games
+	  "katniss everdeen": ["thg series"],
+	  "peeta mellark": ["thg series"],
+	  "finnick odair": ["thg series"],
+	  "johanna mason": ["thg series"],
+	  "gale hawthrone": ["thg series"],
+	  "haymitch abernathy": ["thg series"],
+	  "thresh": ["thg series"],
+	  "rue": ["thg series"],
+	  "effie trinket": ["thg series"],
+	  "president snow": ["thg series"],
+	  "primrose everdeen": ["thg series"],
+	  "cinna": ["thg series"],
+      "katniss x peeta": ["thg series"],
+
+      // *percy jackson universe
+	  "piper mclean": ["hoo", "pjo verse"],
+	  "jason grace": ["hoo", "pjo verse"],
+	  "hazel levesque": ["hoo", "pjo verse"],
+	  "reyna avila ramirez arellano": ["hoo", "pjo verse"],
+	  "frank zhang": ["hoo", "pjo verse"],
+	  "thalia grace": ["pjo", "pjo verse"],
+	  "leo valdez": ["hoo", "pjo verse"],
+	  "grover underwood": ["pjo", "pjo verse"],
+	  "tyson": ["pjo", "pjo verse"],
+	  "luke castellan": ["pjo"],
+
+      // *the vampire diaries
+      "elena gilbert": ["tvd"],
+	  "stefan salvatore": ["tvd"],
+	  "caroline forbes": ["tvd"],
+	  "damon salvatore": ["tvd"],
+	  "matt donovan": ["tvd"],
+	  "bonnie bennett": ["tvd"],
+	  "tyler lockwood": ["tvd"],
+	  "alaric saltzman": ["tvd"],
+	  "rose": ["tvd"],
+	  "anna zhu": ["tvd"],
+	  "katherine pierce": ["tvd"],
+	  "jeremy gilbert": ["tvd"],
+	  "jenna sommers": ["tvd"],
+	  "stefan x caroline": ["tvd"],
+	  "stefan x elena": ["tvd"],
+	  "jeremy x anna": ["tvd"],
+      "stefan x katherine": ["tvd"],
+	  "damon x elena": ["tvd"],
+	  "tyler x caroline": ["tvd"],
+	  "matt x caroline": ["tvd"],
+	  "carena": ["tvd"],
+	  "damon x katherine": ["tvd"],
+
+      // *harry potter
+      "hp icons": ["hp"],
+	  "hp art": ["hp"],
+      "hp houses": ["hp"],
+      "albus dumbledore": ["hp"],
+      "albus potter": ["hp"],
+      "angelica johnson": ["hp"],
+      "astoria greengrass": ["hp"],
+      "bellatrix lestrange": ["hp"],
+      "blaise zabini": ["hp"],
+      "cedric diggory": ["hp"],
+      "cho chang": ["hp"],
+      "dean thomas": ["hp"],
+      "dobby": ["hp"],
+      "dolores umbridge": ["hp"],
+      "draco malfoy": ["hp"],
+      "fleur delacour": ["hp"],
+      "gilderoy lockhart": ["hp"],
+      "ginny weasley": ["hp"],
+      "hannah abbott": ["hp"],
+	  "harry potter": ["hp"],
+      "hermione granger": ["hp"],
+      "hugo weasley": ["hp"],
+      "james potter": ["hp"],
+      "james sirius potter": ["hp"],
+      "lavender brown": ["hp"],
+      "lily evans": ["hp"],
+      "lily luna potter": ["hp"],
+      "luna lovegood": ["hp"],
+      "minerva mcgonagall": ["hp"],
+      "molly weasley": ["hp"],
+      "narcissa malfoy": ["hp"],
+      "neville longbottom": ["hp"],
+      "oliver wood": ["hp"],
+      "pansy parkinson": ["hp"],
+      "parvati patil": ["hp"],
+      "percy weasley": ["hp"],
+      "peter pettigrew": ["hp"],
+      "regulus black": ["hp"],
+      "remus lupin": ["hp"],
+      "rita skeeter": ["hp"],
+      "romilda vane": ["hp"],
+	  "ron weasley": ["hp"],
+	  "rose weasley": ["hp"],
+      "scorpius malfoy": ["hp"],
+      "seamus finnigan": ["hp"],
+      "severus snape": ["hp"],
+	  "sirius black": ["hp"],
+	  "sybill trelawney": ["hp"],
+      "tom riddle": ["hp"],
+      "victoire weasley": ["hp"],
+	  "viktor krum": ["hp"],
+	  "voldemort": ["hp"],
+	  "rowena ravenclaw": ["hp"],
+      "ravenclaw": ["hp"],
+      "the ravenclaws": ["hp"],
+      "helga hufflepuff": ["hp"],
+      "hufflepuff": ["hp"],
+      "the hufflepuffs": ["hp"],
+      "salazar slytherin": ["hp"],
+      "slytherin": ["hp"],
+      "the slytherins": ["hp"],
+      "godric gryffindor": ["hp"],
+      "gryffindor": ["hp"],
+      "the gryffindors": ["hp"],
+      "the founders": ["hp"],
+      "the golden trio": ["hp"],
+      "the silver trio": ["hp"],
+	  "the marauders": ["hp"],
+      "the black sisters": ["hp"],
+      "the malfoys": ["hp"],
+      "the weasleys": ["hp"],
+	  "romione": ["hp"],
+	  "jily": ["hp"],
+	  "drarry": ["hp"],
+      "fred & george": ["hp"],
+      "fabian & gideon": ["hp"],
+      "harry & ron": ["hp"],
+      "harry & hermione": ["hp"],
+      "harry & hagrid": ["hp"],
+      "harry & molly": ["hp"],
+	  "bill x fleur": ["hp"],
+      "lavender x parvati": ["hp"],
+      "harry x luna": ["hp"],
+	  "harry x ginny": ["hp"],
+
+      // american horror story
+      "madison montgomery": ["ahs"],
+      "tate langdon": ["ahs"],
+      "violet harmon": ["ahs"],
+
+      //anne with an e
+      "gilbert blythe": ["awae"],
+	  "anne shirley": ["awae"],
+	  "marilla cuthbert": ["awae"],
+	  "matthew cuthbert": ["awae"],
+	  "diana barry": ["awae"],
+	  "jerry baynard": ["awae"],
+	  "anne x gilbert": ["awae"],
+
+      // arrow
+      "oliver queen": ["arrow"],
+      "thea queen": ["arrow"],
+      "john diggle": ["arrow"],
+      "laurel lance": ["arrow"],
+      "felicity smoak": ["arrow"],
+      "helena bertinelli": ["arrow"],
+      "roy harper": ["arrow"],
+      "sara lance": ["arrow"],
+
+      // blackish
+      "johan johnson": ["blackish"],
+
+      // black sails
+      "anne bonny": ["black sails"],
+      "charles vane": ["black sails"],
+      "eleanor guthrie": ["black sails"],
+      "james flint": ["black sails"],
+      "madi": ["black sails"],
+      "john silver": ["black sails"],
+      "max": ["black sails"],
+      "thomas hamilton": ["black sails"],
+
+      // breaking bad
+      "jesse pinkman": ["breaking bad"],
+      "skyler white": ["breaking bad"],
+      "walter white": ["breaking bad"],
+
+      // broad city
+      "abbi abrams": ["broad city"],
+      "ilana wexler": ["broad city"],
+      "lincoln rice": ["broad city"],
+
+      // castle
+      "richard castle": ["castle"],
+      "kate beckett": ["castle"],
+      "kevin ryan": ["castle"],
+      "javier esposito": ["castle"],
+      "alexis castle": ["castle"],
+
+      // charmed
+      "paige matthews": ["charmed"],
+      "prue halliwell": ["charmed"],
+      "piper halliwell": ["charmed"],
+      "phoebe halliwell": ["charmed"],
+      "chris halliwell": ["charmed"],
+
+      // chuck
+      "chuck bartowski": ["chuck the series"],
+      "ellie bartowski": ["chuck the series"],
+      "sarah walker": ["chuck the series"],
+      "john casey": ["chuck the series"],
+      "morgan grimes": ["chuck the series"],
+
+      // community
+      "jeff winger": ["community"],
+      "annie edison": ["community"],
+      "abed nadir": ["community"],
+      "britta perry": ["community"],
+      "troy barnes": ["community"],
+      "shirley bennett": ["community"],
+      "pierce hawthorne": ["community"],
+      "ben chang": ["community"],
+
+      // crazy ex girlfriend
+      "rebecca bunch": ["crazy ex girlfriend"],
+      "josh chan": ["crazy ex girlfriend"],
+      "heather davis": ["crazy ex girlfriend"],
+      "greg serrano": ["crazy ex girlfriend"],
+      "valencia perez": ["crazy ex girlfriend"],
+      "paula proctor": ["crazy ex girlfriend"],
+
+      // dare me
+      "addy hanlon": ["dare me"],
+      "beth cassidy": ["dare me"],
+      "colette french": ["dare me"],
+      "beth x addy": ["dare me"],
+
+      // dark angel
+      "max guevara": ["dark angel"],
+      "alec mcdowell": ["dark angel"],
+      "logan cale": ["dark angel"],
+      "joshua": ["dark angel"],
+      "alec x max": ["dark angel"],
+      "logan x max": ["dark angel"],
+
+      // dawson's creek
+      "dawson leery": ["dawson's creek"],
+      "joey potter": ["dawson's creek"],
+      "pacey witter": ["dawson's creek"],
+      "jen lindley": ["dawson's creek"],
+      "jack mcphee": ["dawson's creek"],
+      "andie mcphee": ["dawson's creek"],
+      "abby morgan": ["dawson's creek"],
+
+      // dexter
+      "dexter morgan": ["dexter"],
+      "debra morgan": ["dexter"],
+      "rita bennett": ["dexter"],
+      "hannah mckay": ["dexter"],
+      "angel batista": ["dexter"],
+      "james doakes": ["dexter"],
+      "joey quinn": ["dexter"],
+      "maria laguerta": ["dexter"],
+      "lila tournay": ["dexter"],
+      "lumen ann pierce": ["dexter"],
+
+      // dickinson
+      "susan gilbert": ["dickinson"],
+      "emily dickinson": ["dickinson"],
+
+      // doctor who
+      "the doctor": ["doctor who"],
+      "amy pond": ["doctor who"],
+      "clara oswald": ["doctor who"],
+      "rose tyler": ["doctor who"],
+      "donna noble": ["doctor who"],
+      "martha jones": ["doctor who"],
+      "rory williams": ["doctor who"],
+      "river song": ["doctor who"],
+      "sally sparrow": ["doctor who"],
+      "jack harkness": ["doctor who"],
+      "the doctor x rose": ["doctor who"],
+      "the doctor & amy": ["doctor who"],
+      "the doctor & martha": ["doctor who"],
+      "the doctor & donna": ["doctor who"],
+
+      // euphoria
+      "rue bennett": ["euphoria"],
+      "cassie howard": ["euphoria"],
+      "maddy perez": ["euphoria"],
+      "lexi howard": ["euphoria"],
+      "kat hernandez": ["euphoria"],
+      "jules vaughn": ["euphoria"],
+
+      // faking it
+      "amy raudenfeld": ["faking it"],
+      "karma ashcroft": ["faking it"],
+      "lauren cooper": ["faking it"],
+      "liam booker": ["faking it"],
+      "shane harvey": ["faking it"],
+
+      // firefly
+      "river tam": ["firefly"],
+      "mal reynolds": ["firefly"],
+      "kaylee frye": ["firefly"],
+      "jayne cobb": ["firefly"],
+      "simon tam": ["firefly"],
+      "zoe washburne": ["firefly"],
+      "hoban washburne": ["firefly"],
+      "inara serra": ["firefly"],
+      "zoe x wash": ["firefly"],
+      "simon x kaylee": ["firefly"],
+      "mal x inara": ["firefly"],
+
+      // fringe
+      "olivia dunham": ["fringe"],
+      "peter bishop": ["fringe"],
+      "astrid farnsworth": ["fringe"],
+      "charlie francis": ["fringe"],
+      "lincoln lee": ["fringe"],
+      "walter bishop": ["fringe"],
+
+      // friends
+	  "chandler bing": ["friends"],
+	  "ross geller": ["friends"],
+	  "monica geller": ["friends"],
+	  "rachel green": ["friends"],
+	  "phoebe buffay": ["friends"],
+      "joey tribbiani": ["friends"],
+	  "mike hannigan": ["friends"],
+	  "janice hosenstein": ["friends"],
+	  "chandler x monica": ["friends"],
+	  "ross x rachel": ["friends"],
+      "monica & rachel": ["friends"],
+
+      // from dusk to dawn
+      "santanico pandemonium": ["from dusk to dawn"],
+
+      // gilmore girls
+      "rory gilmore": ["gilmore girls"],
+      "lorelai gilmore": ["gilmore girls"],
+      "luke danes": ["gilmore girls"],
+      "jess mariano": ["gilmore girls"],
+      "paris geller": ["gilmore girls"],
+      "lane kim": ["gilmore girls"],
+      "emily gilmore": ["gilmore girls"],
+      "dean forester": ["gilmore girls"],
+
+      // girl meets world
+      "riley matthews": ["gmw"],
+      "maya hart": ["gmw"],
+      "lucas friar": ["gmw"],
+      "farkle minkus": ["gmw"],
+
+      // glee
+      "rachel berry": ["glee"],
+      "finn hudson": ["glee"],
+      "kurt hummel": ["glee"],
+      "blaine anderson": ["glee"],
+      "santana lopez": ["glee"],
+      "brittany pierce": ["glee"],
+      "artie abrams": ["glee"],
+      "mercedes jones": ["glee"],
+      "tina cohen-chang": ["glee"],
+      "noah puckerman": ["glee"],
+      "quinn fabray": ["glee"],
+      "mike chang": ["glee"],
+      "sam evans": ["glee"],
+      "kitty wilde": ["glee"],
+      "jesse st james": ["glee"],
+      "sandy ryerson": ["glee"],
+      "the unholy trinity": ["glee"],
+
+      // gossip girl
+      "blair waldorf": ["gossip girl"],
+      "chuck bass": ["gossip girl"],
+      "serena van der woodsen": ["gossip girl"],
+      "dan humphrey": ["gossip girl"],
+      "jenny humphrey": ["gossip girl"],
+      "nate archibald": ["gossip girl"],
+      "vanessa abrams": ["gossip girl"],
+
+      // hannibal
+      "hannibal lecter": ["hannibal"],
+      "will graham": ["hannibal"],
+      "abigail hobbs": ["hannibal"],
+
+      // house md
+      "gregory house": ["house md"],
+      "james wilson": ["house md"],
+      "eric foreman": ["house md"],
+      "allison cameron": ["house md"],
+      "lisa cuddy": ["house md"],
+      "amber volakis": ["house md"],
+      "remy hadley": ["house md"],
+      "robert chase": ["house md"],
+
+      // how i met your murder
+      "ted mosby": ["himym"],
+      "barney stinson": ["himym"],
+      "lily aldrin": ["himym"],
+      "marshall eriksen": ["himym"],
+      "robin scherbatsky": ["himym"],
+      "barney x robin": ["himym"],
+      "lily x marshall": ["himym"],
+
+      // how to get away with murder
+      "annalise keating": ["htgawm"],
+      "wes gibbins": ["htgawm"],
+      "laurel castillo": ["htgawm"],
+      "michaela pratt": ["htgawm"],
+      "asher millstone": ["htgawm"],
+      "connor walsh": ["htgawm"],
+      "frank delfino": ["htgawm"],
+      "bonnie winterbottom": ["htgawm"],
+      "oliver hampton": ["htgawm"],
+      "rebecca sutter": ["htgawm"],
+
+      // i am not okay with this
+      "sydney novak": ["ianowt"],
+      "stanley barber": ["ianowt"],
+      "dina": ["ianowt"],
+
+      // in the flesh
+      "kieren walker": ["in the flesh"],
+      "amy dyer": ["in the flesh"],
+      "jem walker": ["in the flesh"],
+      "simon monroe": ["in the flesh"],
+      "maxine martin": ["in the flesh"],
+
+      // it's always sunny in philadelphia
+      "dennis reynolds": ["iasip"],
+      "dee reynolds": ["iasip"],
+      "charlie kelly": ["iasip"],
+      "mac mcdonald": ["iasip"],
+      "frank reynolds": ["iasip"],
+
+      // izombie
+      "olivia moore": ["izombie"],
+      "major lilywhite": ["izombie"],
+      "ravi chakrabarti": ["izombie"],
+      "peyton charles": ["izombie"],
+      "clive babineaux": ["izombie"],
+      "blaine debeers": ["izombie"],
+      "lowell tracey": ["izombie"],
+
+      // jane the virgin
+      "jane villanueva": ["jtv"],
+      "michael cordero": ["jtv"],
+      "rafael solano": ["jtv"],
+      "petra solano": ["jtv"],
+      "xiomara villanueva": ["jtv"],
+      "rogelio de la vega": ["jtv"],
+      "jane ramos": ["jtv"],
+
+      // killing eve
+      "villanelle": ["killing eve"],
+      "eve polastri": ["killing eve"],
+      "carolyn martens": ["killing eve"],
+      "kenny stowton": ["killing eve"],
+      "konstantin": ["killing eve"],
+
+      // legend of the seeker
+      "richard cypher": ["legend of the seeker"],
+      "kahlan amnell": ["legend of the seeker"],
+      "cara mason": ["legend of the seeker"],
+
+      // leverage
+      "nathan ford": ["leverage"],
+      "alec hardison": ["leverage"],
+      "eliot spencer": ["leverage"],
+      "parker": ["leverage"],
+      "sophie devereaux": ["leverage"],
+      "hardison x parker": ["leverage"],
+
+      // lost girl
+      "bo dennis": ["lost girl"],
+      "kenzi malikov": ["lost girl"],
+      "tamsin": ["lost girl"],
+
+      // lucifer
+      "lucifer morningstar": ["tv: lucifer"],
+      "chloe decker": ["tv: lucifer"],
+      "dan espinoza": ["tv: lucifer"],
+      "linda martin": ["tv: lucifer"],
+      "mazikeen": ["tv: lucifer"],
+      "charlotte richards": ["tv: lucifer"],
+      "ella lopez": ["tv: lucifer"],
+      "amenadiel": ["tv: lucifer"],
+
+      // midnight mass
+      "erin greene": ["midnight mass"],
+      "riley flynn": ["midnight mass"],
+      "bev keane": ["midnight mass"],
+      "leeza scarborough": ["midnight mass"],
+
+      // misfits
+      "nathan young": ["misfits"],
+      "simon bellamy": ["misfits"],
+      "alisha daniels": ["misfits"],
+      "curtis donovan": ["misfits"],
+      "kelly bailey": ["misfits"],
+      "rudy wade": ["misfits"],
+
+      // my mad fat diary
+      "rae earl": ["my mad fat diary"],
+      "finn nelson": ["my mad fat diary"],
+      "chloe gemmel": ["my mad fat diary"],
+      "rae x finn": ["my mad fat diary"],
+
+      // new girl
+      "jessica day": ["new girl"],
+      "cece parekh": ["new girl"],
+      "nick miller": ["new girl"],
+      "schmidt": ["new girl"],
+      "winston bishop": ["new girl"],
+      "nadia": ["new girl"],
+      "joan day": ["new girl"],
+      "nick x jess": ["new girl"],
+      "schmidt x cece": ["new girl"],
+
+      // once upon a time
+      "emma swan": ["ouat"],
+      "henry mills": ["ouat"],
+      "regina mills": ["ouat"],
+      "graham humbert": ["ouat"],
+      "belle french": ["ouat"],
+      "rumpelstiltskin": ["ouat"],
+      "jefferson": ["ouat"],
+
+      // one day at a time
+      "penelope alvarez": ["odaat"],
+      "elena alvarez": ["odaat"],
+      "alex alvarez": ["odaat"],
+      "lydia riera": ["odaat"],
+
+      // orange is the new black
+      "piper chapman": ["orange is the new black"],
+      "poussey washington": ["orange is the new black"],
+      "alex vause": ["orange is the new black"],
+      "lorna morello": ["orange is the new black"],
+      "maritza ramos": ["orange is the new black"],
+      "nicky nichols": ["orange is the new black"],
+
+      // orphan black
+      "sarah manning": ["orphan black"],
+      "kira manning": ["orphan black"],
+      "felix dawkins": ["orphan black"],
+      "alison hendrix": ["orphan black"],
+      "delphine cormier": ["orphan black"],
+      "helena": ["orphan black"],
+      "cosima niehaus": ["orphan black"],
+      "rachel duncan": ["orphan black"],
+      "beth childs": ["orphan black"],
+      "cal morrison": ["orphan black"],
+      "donnie hendrix": ["orphan black"],
+      "paul dierden": ["orphan black"],
+      "krystal goderitch": ["orphan black"],
+      "siobhan sadler": ["orphan black"],
+      "tony sawicki": ["orphan black"],
+      "victor schmidt": ["orphan black"],
+
+      // parks and recreation
+      "leslie knope": ["parks and rec"],
+      "ben wyatt": ["parks and rec"],
+      "april ludgate": ["parks and rec"],
+      "ann perkins": ["parks and rec"],
+      "andy dwyer": ["parks and rec"],
+      "ron swanson": ["parks and rec"],
+      "tom haverford": ["parks and rec"],
+      "chris traeger": ["parks and rec"],
+
+      // person of interest
+      "john reese": ["person of interest"],
+      "lionel fusco": ["person of interest"],
+      "root": ["person of interest"],
+      "sameen shaw": ["person of interest"],
+      "joss carter": ["person of interest"],
+      "root x shaw": ["person of interest"],
+
+      // pretty little liars
+      "aria montgomery": ["pll"],
+      "hanna marin": ["pll"],
+      "spencer hastings": ["pll"],
+      "emily fields": ["pll"],
+      "alison dilaurentis": ["pll"],
+      "mona vanderwaal": ["pll"],
+      "toby cavanaugh": ["pll"],
+      "caleb rivers": ["pll"],
+      "ezra fitz": ["pll"],
+      "jenna marshall": ["pll"],
+      "jason dilaurentis": ["pll"],
+      "maya st germain": ["pll"],
+
+      // psych
+      "shawn spencer": ["psych"],
+      "burton guster": ["psych"],
+      "carlton lassiter": ["psych"],
+      "juliet o'hara": ["psych"],
+      "henry spencer": ["psych"],
+      "karen vick": ["psych"],
+
+      // pushing daisies
+      "ned": ["pushing daisies"],
+
+      // quantico
+      "alex parrish": ["quantico"],
+
+      // queer as folk
+      "brian kinney": ["queer as folk"],
+      "justin taylor": ["queer as folk"],
+      "michael novotny": ["queer as folk"],
+
+      // reign
+      "mary stuart": ["reign"],
+
+      // riverdale
+      "archie andrews": ["riverdale"],
+      "betty cooper": ["riverdale"],
+      "cheryl blossom": ["riverdale"],
+      "jughead jones": ["riverdale"],
+      "veronica lodge": ["riverdale"],
+      "toni topaz": ["riverdale"],
+
+      // russian doll
+      "nadia vulvokov": ["russian doll"],
+      "alan zaveri": ["russian doll"],
+
+      // santa clarita diet
+      "joel hammond": ["santa clarita diet"],
+      "sheila hammond": ["santa clarita diet"],
+      "abby hammond": ["santa clarita diet"],
+      "eric bemis": ["santa clarita diet"],
+
+      // schitt's creek
+      "alexis rose": ["schitt's creek"],
+      "david rose": ["schitt's creek"],
+      "johnny rose": ["schitt's creek"],
+      "moira rose": ["schitt's creek"],
+      "stevie budd": ["schitt's creek"],
+      "patrick brewer": ["schitt's creek"],
+      "ted mullens": ["schitt's creek"],
+
+      // scrubs
+      "john dorian": ["scrubs"],
+      "christopher turk": ["scrubs"],
+      "elliot reid": ["scrubs"],
+      "carla espinosa": ["scrubs"],
+      "perry cox": ["scrubs"],
+
+      // sharp objects
+      "camille preaker": ["sharp objects"],
+      "adora crellin": ["sharp objects"],
+      "amma crellin": ["sharp objects"],
+      "richard willis": ["sharp objects"],
+
+      // stranger things
+      "steve harrington": ["stranger things"],
+      "mike wheeler": ["stranger things"],
+      "will byers": ["stranger things"],
+      "nancy wheeler": ["stranger things"],
+      "max mayfield": ["stranger things"],
+      "dustin henderson": ["stranger things"],
+
+      // selfie
+      "eliza dooley": ["selfie"],
+      "henry higgs": ["selfie"],
+      "eliza x henry": ["selfie"],
+
+      // sense8
+      "nomi marks": ["sense8"],
+      "lito rodriguez": ["sense8"],
+      "kala dandekar": ["sense8"],
+      "sun bak": ["sense8"],
+      "capheus van damme": ["sense8"],
+      "wolfgang bogdanow": ["sense8"],
+      "will gorski": ["sense8"],
+      "riley blue": ["sense8"],
+
+      // shadowhunters
+      "clary fray": ["shadowhunters"],
+      "jace wayland": ["shadowhunters"],
+      "alec lightwood": ["shadowhunters"],
+      "isabelle lightwood": ["shadowhunters"],
+      "simon lewis": ["shadowhunters"],
+      "magnus bane": ["shadowhunters"],
+
+      // shameless
+      "fiona gallagher": ["shameless"],
+      "ian gallagher": ["shameless"],
+      "phillip gallagher": ["shameless"],
+      "carl gallagher": ["shameless"],
+      "debbie gallagher": ["shameless"],
+      "frank gallagher": ["shameless"],
+      "mickey milkovich": ["shameless"],
+      "mandy milkovich": ["shameless"],
+      "kevin ball": ["shameless"],
+
+      // sherlock
+      "sherlock holmes": ["sherlock"],
+      "john watson": ["sherlock"],
+      "mycroft holmes": ["sherlock"],
+      "molly hooper": ["sherlock"],
+      "mary morstan": ["sherlock"],
+      "jim moriarty": ["sherlock"],
+      "greg lestrade": ["sherlock"],
+
+      // skins
+      "effy stonem": ["skins"],
+      "cassie ainsworth": ["skins"],
+      "michelle richardson": ["skins"],
+      "max oliver": ["skins"],
+      "anwar kharral": ["skins"],
+      "freddie mcclair": ["skins"],
+      "james cook": ["skins"],
+      "emily fitch": ["skins"],
+      "katie fitch": ["skins"],
+      "chris miles": ["skins"],
+      "sid jenkins": ["skins"],
+      "naomi campbell": ["skins"],
+      "tony x michelle": ["skins"],
+      "naomi x emily": ["skins"],
+      "cook x effy": ["skins"],
+      "freddie x effy": ["skins"],
+      "effy & katie": ["skins"],
+
+      // suits
+      "mike ross": ["suits"],
+      "harvey specter": ["suits"],
+      "donna paulsen": ["suits"],
+      "rachel zane": ["suits"],
+      "jessica pearson": ["suits"],
+
+      // the 100
+      "clarke griffin": ["the 100"],
+      "bellamy blake": ["the 100"],
+      "raven reyes": ["the 100"],
+      "octavia blake": ["the 100"],
+      "abby griffin": ["the 100"],
+      "finn collins": ["the 100"],
+      "wells jaha": ["the 100"],
+      "jasper jordan": ["the 100"],
+      "john murphy": ["the 100"],
+      "lexa": ["the 100"],
+      "nathan miller": ["the 100"],
+
+      // the midnight club
+
+
+      // the flash
+
+
+      // the get down
+      "shaolin fantastic": ["the get down"],
+      "mylene cruz": ["the get down"],
+      "misty holloway": ["the get down"],
+      "ezekiel figuero": ["the get down"],
+
+
+      // the oc
+      "seth cohen": ["the oc"],
+      "marissa cooper": ["the oc"],
+      "summer roberts": ["the oc"],
+
+      // the originals
+      "davina claire": ["the originals"],
+
+      // the secret circle
+      "cassie blake": ["the secret circle"],
+      "diana meade": ["the secret circle"],
+      "faye chamberlain": ["the secret circle"],
+      "melissa glaser": ["the secret circle"],
+      "diana & cassie": ["the secret circle"],
+
+      //the umbrella academy
+      "allison hargreeves": ["the umbrella academy"],
+      "lila pitts": ["the umbrella academy"],
+      "five hargreeves": ["the umbrella academy"],
+      "klaus hargreeves": ["the umbrella academy"],
+      "diego hargreeves": ["the umbrella academy"],
+      "ben hargreeves": ["the umbrella academy"],
+      "luther hargreeves": ["the umbrella academy"],
+      "viktor hargreeves": ["the umbrella academy"],
+
+      // unbreakable kimmy schmidt
+      "kimmy schmidt": ["unbreakable kimmy schmidt"],
+
+      // the walking dead
+      "beth greene": ["the walking dead"],
+
+      // the winchesters
+
+
+      // the witcher
+
+
+      // veronica mars
+      "veronica mars": ["vm"],
+      "wallace fennel": ["vm"],
+      "logan echolls": ["vm"],
+      "lilly kane": ["vm"],
+      "keith mars": ["vm"],
+      "cindy mackenzie": ["vm"],
+      "duncan kane": ["vm"],
+      "logan x veronica": ["vm"],
+      "veronica & wallace": ["vm"],
+
+      // wednesday
+      "wednesday addams": ["wednesday"],
+      "enid sinclair": ["wednesday"],
+      "wednesday & enid": ["wednesday"],
+
+      // *writing
+      "writing: characters": ["ref: writing"],
+      "writing: ideas": ["ref: writing"],
+      "character names": ["writing: characters", "ref: writing"],
+      "writing: dialogue": ["ref: writing"],
+      "writing: worldbuilding": ["ref: writing"],
+      "writing: vocabulary": ["ref: writing"],
+      "writing: publishing": ["ref: writing"],
+      "writing: infos": ["ref: writing"],
+      "writing: links": ["ref: writing"],
+      "writing: tips": ["ref: writing"],
+
+    // Add more linked tags as needed
+};
+
+// Function to check and add linked tags
+const checkAndAddLinkedTags = async () => {
+  // Check if the "selected-tags" div exists
+  const selectedTagsElement = document.getElementById('selected-tags');
+  if (!selectedTagsElement) {
+    return;
+  }
+
+  // Get all the tags within the "selected-tags" div
+  const tags = Array.from(selectedTagsElement.querySelectorAll('.unn5w'));
+
+    // Loop through each tag and check if it exists in linkedTags
+  tags.forEach(async (tagElement) => {
+    const tagName = tagElement.textContent.trim();
+
+    if (linkedTags.hasOwnProperty(tagName)) {
+      const linkedTagsToAdd = linkedTags[tagName];
+
+      // Call the editPostFormTags function to add the linked tags
+      await editPostFormTags({ add: linkedTagsToAdd, remove: [] });
+
+      // Log a message when tags are added
+      console.log(`Added linked tags for tag: ${tagName}`);
+    }
+  });
+};
+
+// Create a MutationObserver to watch for changes in the page
+const observer = new MutationObserver(() => {
+  // Call the checkAndAddLinkedTags function whenever a change is detected
+  checkAndAddLinkedTags();
+});
+
+// Configure the observer to watch for changes in the body of the page
+const observerConfig = { childList: true, subtree: true };
+
+// Start observing the page for changes
+observer.observe(document.body, observerConfig);
+
+// Call the checkAndAddLinkedTags function initially to handle the current state of the page
+checkAndAddLinkedTags();
