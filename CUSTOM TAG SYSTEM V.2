@@ -1,0 +1,475 @@
+// ==UserScript==
+// @name         CUSTOM TAG SYSTEM
+// @namespace    http://tampermonkey/
+// @version      0001
+// @description  new tag input with button
+// @author       Lily & ChatGPT & Help
+// @match        https://www.tumblr.com/*
+// @grant        GM_addStyle
+// @require      https://code.jquery.com/jquery-3.6.0.min.js
+// ==/UserScript==
+
+GM_addStyle(`
+
+.custom-popover {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  padding: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  overflow-y: auto;
+  z-index: 9999;
+  pointer-events: auto;
+  width: 184px;
+  top: 0; /* position the popover at the top of the post container */
+  left: 0; /* position the popover at the left of the post container */
+}
+
+.custom-popover::-webkit-scrollbar {
+  width: 10px; /* width of the scroll bar */
+}
+
+.custom-popover::-webkit-scrollbar-thumb {
+  background-color: #acacac; /* color of the thumb */
+  border-radius: 5px; /* round the edges of the thumb */
+}
+
+.custom-popover::-webkit-scrollbar-track {
+  background-color: #f2f2f2; /* color of the track */
+  border-radius: 5px; /* round the edges of the track */
+}
+
+.custom-popover.no-results {
+  display: none !important;
+}
+
+.custom-popover.active {
+  display: block;
+}
+
+.custom-popover-header {
+  margin-bottom: 8px;
+  border: 0;
+  border-top: 1px solid #f2f2f2;
+  border-bottom: 1px solid #f2f2f2;
+  color: #333366;
+  text-shadow: none;
+  background: #f2f2f2;
+  box-shadow: none;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 0 12px;
+  line-height: 23px;
+  height: 24px;
+}
+
+.custom-popover-tag {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  font-family: 'Arial', sans-serif;
+  font-size: 12px;
+  width: 85%;
+  text-align: left;
+  color: #000;
+  transition: all 0.2s ease-in-out;
+  padding: 5px 15px;
+  vertical-align: baseline;
+}
+
+.custom-popover-tag:hover {
+  background-color: #f3f3f3;
+}
+
+.custom-popover-tag:active {
+  background-color: #ddd;
+  color: #fff;
+}
+
+.custom-popover-tag span {
+  flex: 1;
+  margin-right: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-popover-tag button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  color: #3e4a57;
+  cursor: pointer;
+}
+
+.custom-popover-tag button:hover {
+  color: #337ab7;
+}
+
+
+.post-container {
+  position: relative;
+  z-index: 1; /* set the z-index lower than the popover */
+}
+
+.custom-tag-input {
+  display: flex;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 10px;
+  margin-left: 10px;
+  margin: 0 auto; /* add this line to center the input field */
+  max-width: 520px; /* add this line to make the input field wider */
+}
+
+.custom-tag-input input {
+  flex-grow: 1;
+  border: none;
+  font-size: 14px;
+  line-height: 20px;
+  outline: none;
+  padding: 5px 10px;
+  border: 1px solid #D9D9D9;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px #5F9EA0;
+}
+
+.custom-tag-input input:focus {
+  box-shadow: 1px #BFBFBF;
+}
+
+.custom-tag-button {
+  background-color: #f2f2f2 !important;
+  border: 1px solid #D9D9D9 !important;
+  border-radius: 4px;
+  margin-left: 10px !important;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  padding: 1px 12px !important;
+  height: 24px;
+  line-height: 22px;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 1px #BFBFBF !important;
+  display: inline-block !important;
+}
+
+.custom-tag-button:hover {
+  background-color: #333366;
+  color: #f2f2f2;
+}
+`);
+
+function dom (tagName, attributes = {}, events = {}, children = []) {
+  const element = attributes?.xmlns
+    ? document.createElementNS(attributes.xmlns, tagName)
+    : document.createElement(tagName);
+
+  attributes && Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, value));
+  events && Object.entries(events).forEach(([type, listener]) => element.addEventListener(type, listener));
+  children && element.replaceChildren(...children);
+
+  element.normalize();
+  return element;
+}
+
+const { nonce } = [...document.scripts].find(script => script.getAttributeNames().includes('nonce'));
+const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+/**
+ * @param {Function} func - Function to run in the page context (can be async)
+ * @param {Array} [args] - Array of arguments to pass to the function via spread
+ * @param {Element} [target] - Element to append script to; will be accessible as
+ *                             document.currentScript.parentElement in the injected function.
+ * @returns {Promise<any>} The return value of the function, or the caught exception
+ */
+const inject = async (func, args = [], target = document.documentElement) => {
+  const name = `xkit$${func.name || 'injected'}`;
+  const async = func instanceof AsyncFunction;
+
+  const script = dom('script', { nonce }, null, [`{
+    const { dataset } = document.currentScript;
+    const ${name} = ${func.toString()};
+    const returnValue = ${name}(...${JSON.stringify(args)});
+    ${async
+      ? `returnValue
+          .then(result => { dataset.result = JSON.stringify(result || null); })
+          .catch(exception => { dataset.exception = JSON.stringify({
+            message: exception.message,
+            name: exception.name,
+            stack: exception.stack,
+            ...exception
+          })})
+        `
+      : 'dataset.result = JSON.stringify(returnValue || null);'
+    }
+  }`]);
+
+  if (async) {
+    return new Promise((resolve, reject) => {
+      const attributeObserver = new MutationObserver((mutations, observer) => {
+        if (mutations.some(({ attributeName }) => attributeName === 'data-result')) {
+          observer.disconnect();
+          resolve(JSON.parse(script.dataset.result));
+        } else if (mutations.some(({ attributeName }) => attributeName === 'data-exception')) {
+          observer.disconnect();
+          reject(JSON.parse(script.dataset.exception));
+        }
+      });
+
+      attributeObserver.observe(script, {
+        attributes: true,
+        attributeFilter: ['data-result', 'data-exception']
+      });
+      target.append(script);
+      script.remove();
+    });
+  } else {
+    target.append(script);
+    script.remove();
+    return JSON.parse(script.dataset.result);
+  }
+};
+
+const controlTagsInput = async ({ add, remove }) => {
+  add = add.map(tag => tag.trim()).filter((tag, index, array) => array.indexOf(tag) === index);
+
+  const selectedTagsElement = document.getElementById('selected-tags');
+  if (!selectedTagsElement) { return; }
+
+  const reactKey = Object.keys(selectedTagsElement).find(key => key.startsWith('__reactFiber'));
+  let fiber = selectedTagsElement[reactKey];
+
+  while (fiber !== null) {
+    let tags = fiber.stateNode?.state?.tags;
+    if (Array.isArray(tags)) {
+      tags.push(...add.filter(tag => tags.includes(tag) === false));
+      tags = tags.filter(tag => remove.includes(tag) === false);
+      fiber.stateNode.setState({ tags });
+      break;
+    } else {
+      fiber = fiber.return;
+    }
+  }
+};
+
+/**
+ * Manipulate post form tags
+ * @param {object} options - Tags to add/remove to/from the current post form
+ * @param {string[]} [options.add] - Tags to insert
+ * @param {string[]} [options.remove] - Tags to remove
+ * @returns {Promise<void>} Resolves when finished
+ */
+const editPostFormTags = async ({ add = [], remove = [] }) => inject(controlTagsInput, [{ add, remove }]);
+
+let customPopover = null;
+let isPopoverShown = false;
+
+function waitForKeyElements(selector, callback) {
+  const interval = setInterval(() => {
+    const element = document.querySelector(selector);
+    if (element) {
+      clearInterval(interval);
+      callback(element);
+    }
+  }, 100);
+}
+
+// Create the custom tag input and button
+const customTagInput = document.createElement('div');
+customTagInput.className = 'custom-tag-input';
+const inputField = document.createElement('input');
+inputField.type = 'text';
+inputField.autocomplete = 'off'; // Add autocomplete attribute with "off"
+inputField.name = 'customTagName'; // Set the 'name' property
+inputField.placeholder = '';
+inputField.tabIndex = 0;
+customTagInput.appendChild(inputField);
+const tagButton = document.createElement('button');
+tagButton.className = 'custom-tag-button';
+tagButton.textContent = 'Last';
+tagButton.tabIndex = -1;
+customTagInput.appendChild(tagButton);
+
+// Add the custom tag input and button to the post footer when the .s7YOu element is available
+waitForKeyElements('.s7YOu', (tagEditor) => {
+  tagEditor.insertBefore(customTagInput, tagEditor.firstChild);
+
+    // retrieve the last added tag from local storage and log it to the console
+  const lastCustomTag = localStorage.getItem('lastCustomTag');
+  if (lastCustomTag) {
+    console.log('Last added tag:', lastCustomTag);
+  }
+
+  // Add event listener to the custom tag button within this callback
+  tagButton.addEventListener('click', () => {
+    // Retrieve the last added tag from local storage
+    const lastAddedTag = localStorage.getItem('lastCustomTag');
+
+    if (lastAddedTag) {
+      // Call the editPostFormTags function with the tag to add
+      editPostFormTags({ add: [lastAddedTag] });
+    }
+  });
+});
+
+inputField.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') {
+    console.log('Custom tag added:', inputField.value);
+    const addedTags = JSON.parse(localStorage.getItem('addedTags')) || [];
+    addedTags.push(inputField.value);
+    localStorage.setItem('addedTags', JSON.stringify(addedTags));
+    inputField.value = '';
+  }
+});
+
+tagButton.addEventListener('click', () => {
+  const lastAddedTag = getLastAddedTag(); // Get the last added tag
+  if (lastAddedTag) {
+    console.log('Last added tag:', lastAddedTag);
+    editPostFormTags({ add: [lastAddedTag] }); // Add the last added tag
+  }
+  // Remove the popover after adding the tag
+  if (customPopover) {
+    customPopover.classList.remove('active');
+    customPopover.remove();
+    customPopover = null;
+  }
+});
+
+  function getLastAddedTag() {
+    return localStorage.getItem('lastCustomTag');
+  }
+
+// Add an input event listener to the custom tag input to show the popover
+inputField.addEventListener('input', () => {
+  const tagInputValue = inputField.value.trim().toLowerCase();
+  if (tagInputValue && !customPopover) {
+    customPopover = document.createElement('div');
+    customPopover.classList.add('custom-popover');
+    document.body.appendChild(customPopover);
+    isPopoverShown = true;
+  } else if (!tagInputValue && customPopover) {
+    customPopover.remove();
+    customPopover = null;
+    isPopoverShown = false;
+  }
+
+  // Fetch the JSON file
+  fetch('https://raw.githubusercontent.com/hellersqueen/customtagslist/main/my-test-list.json')
+    .then(response => response.json())
+    .then(data => {
+      // Loop through the categories and tags to generate the HTML for the popover
+      let customPopoverHTML = '';
+      for (const category in data) {
+        const categoryTags = data[category].filter(tag => tag.toLowerCase().startsWith(tagInputValue));
+        if (categoryTags.length > 0) {
+          customPopoverHTML += `<div class="custom-popover-header">${category}:</div>`;
+          customPopoverHTML += '<div class="custom-popover-tags">';
+          for (const tag of categoryTags) {
+            customPopoverHTML += `<div class="custom-popover-tag"><button>${tag}</button></div>`;
+          }
+          customPopoverHTML += '</div>';
+        }
+      }
+      customPopover.innerHTML = customPopoverHTML;
+
+      if (customPopover) {
+        // Filter function with sorting
+        const tagWrappers = customPopover.querySelectorAll('.custom-popover-tag');
+        const headerWrappers = customPopover.querySelectorAll('.custom-popover-header');
+        let shownTags = [];
+        let hiddenTags = [];
+        tagWrappers.forEach(wrapper => {
+          const tagText = wrapper.textContent.toLowerCase();
+          if (tagText.startsWith(tagInputValue.toLowerCase())) {
+            shownTags.push(wrapper);
+          } else {
+            hiddenTags.push(wrapper);
+          }
+        });
+        shownTags.forEach(wrapper => {
+          wrapper.classList.remove('hidden');
+        });
+        hiddenTags.forEach(wrapper => {
+          wrapper.classList.add('hidden');
+        });
+        headerWrappers.forEach(header => {
+          const headerTags = header.nextElementSibling.querySelectorAll('.custom-popover-tag button');
+          const isHeaderShown = Array.from(headerTags).some(tag => !tag.parentNode.classList.contains('hidden'));
+          if (!isHeaderShown) {
+            header.classList.add('hidden');
+          } else {
+            header.classList.remove('hidden');
+          }
+        });
+
+        const isAnyTagShown = shownTags.length > 0;
+        if (isAnyTagShown) {
+          customPopover.classList.add('active');
+          const tagInputRect = inputField.getBoundingClientRect();
+          customPopover.style.top = `${tagInputRect.top - customPopover.offsetHeight}px`; // Adjusted position
+          customPopover.style.left = `${tagInputRect.left}px`;
+          isPopoverShown = true;
+        } else {
+          customPopover.classList.remove('active');
+          customPopover.remove();
+          customPopover = null;
+          isPopoverShown = false;
+        }
+      }
+    });
+});
+
+// ... (Previous code remains unchanged)
+
+// Add a click event listener to the document to hide the popover when the user clicks outside
+document.addEventListener('click', event => {
+  const customTagInput = document.querySelector('.custom-tag-input input');
+  if (isPopoverShown && !inputField.contains(event.target) && !customPopover.contains(event.target) && customTagInput.value.trim() === '') {
+    customPopover.classList.remove('active');
+    customPopover.remove();
+    customPopover = null;
+    isPopoverShown = false;
+  }
+});
+
+// Wait for the customPopover to be available
+waitForKeyElements('.custom-popover', (customPopover) => {
+  // Select all elements with the class 'custom-popover-tag' inside customPopover
+  const customPopoverTags = customPopover.querySelectorAll('.custom-popover-tag button');
+
+  // Add event listener to each tag button in the popover
+  if (customPopover) {
+    customPopover.addEventListener('click', (event) => {
+      if (event.target.matches('.custom-popover-tag button')) {
+        const tagText = event.target.textContent;
+        // Call the editPostFormTags function with the clicked tag to add
+        editPostFormTags({ add: [tagText] });
+
+        // Update the last added tag in local storage
+        localStorage.setItem('lastCustomTag', tagText);
+
+        // Log the last added tag to the console
+        console.log('Last added tag:', tagText);
+
+        // Remove the popover after adding the tag
+        customPopover.classList.remove('active');
+        customPopover.remove();
+        customPopover = null;
+        isPopoverShown = false;
+      }
+    });
+  }
+});
