@@ -1,0 +1,22 @@
+// ==UserScript==
+// @name         Remove Tumblr Popover
+// @namespace    http://tampermonkey/
+// @version      2
+// @description  Removes the Tumblr tag suggestion popover
+// @author       Lily & ChatGPT
+// @match        https://www.tumblr.com/*
+// @grant        none
+// ==/UserScript==
+
+function removePopover() {
+  // Get the tag suggestions popover and remove it from the DOM
+  const popover = document.querySelector('.DxQ0f[data-popper-escaped="false"]');
+  if (popover) {
+    popover.remove();
+  }
+}
+
+// Call the removePopover function whenever the popover is shown or updated
+const observer = new MutationObserver(removePopover);
+const config = { childList: true, subtree: true };
+observer.observe(document.body, config);
