@@ -1,0 +1,179 @@
+// ==UserScript==
+// @name         Tumblr Auto Draft
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Automatically set reblogs to "draft" on Tumblr.
+// @author       Lily & ChatGPT & Help
+// @match        https://www.tumblr.com/*
+// @grant        none
+// ==/UserScript==
+
+// Wait for the window to load all resources
+window.onload = async function() {
+    'use strict';
+
+    /**
+     * Create elements with simple syntax
+     * @param {string} tagName - Type of element to create
+     * @param {object} [attributes] - Property-value pairs to set as HTML/XML attributes (e.g., { href: '/' })
+     * @param {object} [events] - Property-value pairs to set as event listeners (e.g., { click: () => {} })
+     * @param {(Node|string)[]} [children] - Zero or more valid children
+     * @returns {Element} Element created to specification
+     */
+    function dom(tagName, attributes = {}, events = {}, children = []) {
+        const element = attributes?.xmlns
+            ? document.createElementNS(attributes.xmlns, tagName)
+            : document.createElement(tagName);
+
+        attributes && Object.entries(attributes).forEach(([name, value]) => element.setAttribute(name, value));
+        events && Object.entries(events).forEach(([type, listener]) => element.addEventListener(type, listener));
+        children && element.replaceChildren(...children);
+
+        element.normalize();
+        return element;
+    }
+
+    const { nonce } = [...document.scripts].find(script => script.getAttributeNames().includes('nonce'));
+    const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor;
+
+    /**
+     * @param {Function} func - Function to run in the page context (can be async)
+     * @param {Array} [args] - Array of arguments to pass to the function via spread
+     * @param {Element} [target] - Element to append script to; will be accessible as
+     *                             document.currentScript.parentElement in the injected function.
+     * @returns {Promise<any>} The return value of the function, or the caught exception
+     */
+    const inject = async (func, args = [], target = document.documentElement) => {
+        const name = `xkit$${func.name || 'injected'}`;
+        const async = func instanceof AsyncFunction;
+
+        const script = dom('script', { nonce }, null, [`{
+            const { dataset } = document.currentScript;
+            const ${name} = ${func.toString()};
+            const returnValue = ${name}(...${JSON.stringify(args)});
+            ${async
+                ? `returnValue
+                    .then(result => { dataset.result = JSON.stringify(result || null); })
+                    .catch(exception => { dataset.exception = JSON.stringify({
+                        message: exception.message,
+                        name: exception.name,
+                        stack: exception.stack,
+                        ...exception
+                    })})
+                `
+                : 'dataset.result = JSON.stringify(returnValue || null);'
+            }
+        }`]);
+
+        if (async) {
+            return new Promise((resolve, reject) => {
+                const attributeObserver = new MutationObserver((mutations, observer) => {
+                    if (mutations.some(({ attributeName }) => attributeName === 'data-result')) {
+                        observer.disconnect();
+                        resolve(JSON.parse(script.dataset.result));
+                    } else if (mutations.some(({ attributeName }) => attributeName === 'data-exception')) {
+                        observer.disconnect();
+                        reject(JSON.parse(script.dataset.exception));
+                    }
+                });
+
+                attributeObserver.observe(script, {
+                    attributes: true,
+                    attributeFilter: ['data-result', 'data-exception']
+                });
+                target.append(script);
+                script.remove();
+            });
+        } else {
+            target.append(script);
+            script.remove();
+            return JSON.parse(script.dataset.result);
+        }
+    };
+
+    const cssMap = await inject(async () => window.tumblr.getCssMap());
+
+    /**
+     * @param {...string} keys - One or more element source names
+     * @returns {string[]} An array of generated classnames from the CSS map
+     */
+    const keyToClasses = (...keys) => keys.flatMap(key => cssMap[key]).filter(Boolean);
+
+    /**
+     * @param {...string} keys - One or more element source names
+     * @returns {string} - A CSS :is() selector which targets all elements that match any of the given source names
+     */
+    const keyToCss = function (...keys) {
+      const classes = keyToClasses(...keys);
+      return `:is(${classes.map(className => `.${className}`).join(', ')})`;
+    };
+
+    const controlTagsInput = async ({ add, remove }) => {
+      add = add.map(tag => tag.trim()).filter((tag, index, array) => array.indexOf(tag) === index);
+
+      const selectedTagsElement = document.getElementById('selected-tags');
+      if (!selectedTagsElement) { return; }
+
+      const reactKey = Object.keys(selectedTagsElement).find(key => key.startsWith('__reactFiber'));
+      let fiber = selectedTagsElement[reactKey];
+
+      while (fiber !== null) {
+        let tags = fiber.stateNode?.state?.tags;
+        if (Array.isArray(tags)) {
+          tags.push(...add.filter(tag => tags.includes(tag) === false));
+          tags = tags.filter(tag => remove.includes(tag) === false);
+          fiber.stateNode.setState({ tags });
+          break;
+        } else {
+          fiber = fiber.return;
+        }
+      }
+    };
+
+    const editPostFormTags = async ({ add = [], remove = [] }) => inject(controlTagsInput, [{ add, remove }]);
+
+    const controlPostFormStatus = (status, publishOnMs) => {
+      const button = document.currentScript.parentElement;
+      const reactKey = Object.keys(button).find(key => key.startsWith('__reactFiber'));
+
+      const isScheduled = status === 'scheduled';
+      let fiber = button[reactKey];
+      while (fiber !== null) {
+        if (fiber.stateNode?.state?.isDatePickerVisible !== undefined) {
+          fiber.stateNode.setState({ isDatePickerVisible: isScheduled });
+          break;
+        } else {
+          fiber = fiber.return;
+        }
+      }
+
+      fiber = button[reactKey];
+      while (fiber !== null) {
+        if (fiber.stateNode?.setFormPostStatus && fiber.stateNode?.onChangePublishOnValue) {
+          fiber.stateNode.setFormPostStatus(status);
+          if (status === 'schedule' && publishOnMs) {
+            fiber.stateNode.onChangePublishOnValue(new Date(publishOnMs));
+          }
+          break;
+        } else {
+          fiber = fiber.return;
+        }
+      }
+    };
+
+    /**
+     * Manipulate post form submit button status
+     *
+     * @param {'now'|'queue'|'draft'|'private'|'schedule'} status - Mode to set the post form submit button to
+     */
+    const editPostFormStatus = async (status) => {
+      const button = document.querySelector(`${keyToCss('postFormButton')} button`);
+      if (!button) throw new Error('Missing button element to edit post form status');
+
+await inject(controlPostFormStatus, [status], button);
+        }
+    // Call the editPostFormStatus function with 'draft' as the argument
+await editPostFormStatus('draft');
+
+    };
+
