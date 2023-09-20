@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey/
 // @version      0001
 // @description  new tag input with button
-// @author       Lily & ChatGPT
+// @author       Lily & ChatGPT & Help
 // @match        https://www.tumblr.com/*
 // @grant        GM_addStyle
 // @require      https://code.jquery.com/jquery-3.6.0.min.js
@@ -121,18 +121,45 @@ GM_addStyle(`
   z-index: 1; /* set the z-index lower than the popover */
 }
 
+.block-editor-writing-flow {
+    max-height: 100px !important;
+}
+
+.s7YOu {
+  display: flex;
+  flex-direction: column; /* Stack elements vertically */
+  padding-bottom: 20px;
+}
+
+.sHSSD {
+  text-align: left; /* Align tags and tag buttons to the left */
+}
+
+.aLlJL {
+  display: inline-block !important;
+  justify-content: flex-start !important; /* Align tags to the left */
+  margin-right: 8px !important;
+  margin-bottom: 20px !important;
+  padding: 4px 8px !important;
+  border-radius: 7px !important;
+  font-size: 14px !important;
+  color: #333 !important;
+  text-align: left; /* Align the text within the tags to the left */
+}
+
 .custom-tag-input {
   display: flex;
   align-items: center;
   margin-top: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 20px !important;
   margin-right: 10px;
   margin-left: 10px;
   margin: 0 auto; /* add this line to center the input field */
-  max-width: 520px; /* add this line to make the input field wider */
+  max-width: 580px; /* add this line to make the input field wider */
 }
 
 .custom-tag-input input {
+  width: 400px;
   flex-grow: 1;
   border: none;
   font-size: 14px;
@@ -302,9 +329,11 @@ tagButton.textContent = 'Last';
 tagButton.tabIndex = -1;
 customTagInput.appendChild(tagButton);
 
-// Add the custom tag input and button to the post footer when the .s7YOu element is available
-waitForKeyElements('.s7YOu', (tagEditor) => {
-  tagEditor.insertBefore(customTagInput, tagEditor.firstChild);
+// Get reference to the .s7YOu element
+const s7YOuElement = document.querySelector('.s7YOu');
+
+// Move the custom tag input and button to the top of the s7YOu element
+s7YOuElement.insertBefore(customTagInput, s7YOuElement.firstChild);
 
     // retrieve the last added tag from local storage and log it to the console
   const lastCustomTag = localStorage.getItem('lastCustomTag');
@@ -322,7 +351,6 @@ waitForKeyElements('.s7YOu', (tagEditor) => {
       editPostFormTags({ add: [lastAddedTag] });
     }
   });
-});
 
 inputField.addEventListener('keydown', (event) => {
   if (event.key === 'Enter') {
@@ -467,6 +495,7 @@ waitForKeyElements('.custom-popover', (customPopover) => {
         customPopover.remove();
         customPopover = null;
         isPopoverShown = false;
+          inputField.value = '';
       }
     });
   }
