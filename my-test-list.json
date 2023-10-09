@@ -612,6 +612,7 @@
 		"james rhodes",
 		"jane foster",
 		"maria hill",
+		"loki laufeyson",
 		"nakia",
 		"natasha romanoff",
 		"nick fury",
@@ -632,6 +633,7 @@
     	"Supernatural": [
 		"spn",
 		"spn art",
+		"spn cast",
 		"dean winchester",
 		"sam winchester",
 		"castiel",
@@ -667,6 +669,7 @@
 		"hael",
 		"tammi",
 		"lisa braeden",
+		"krissy chambers",
 		"tracy bell",
 		"andy gallagher",
 		"pamela barnes",
@@ -682,9 +685,12 @@
 		"team free will",
 		"destiel",
 		"sam x meg",
+		"sam x sarah",
+		"dean x lisa",
 		"dean x jo",
 		"sam & dean",
-		"sam & cas"
+		"sam & cas",
+		"dean & charlie"
    	 ],
 	"Harry Potter": [
 		"hp",
@@ -776,6 +782,7 @@
     	],
     	"Teen Wolf": [
 		"teen wolf",
+		"teen wolf art",
 		"stiles stilinski",
 		"derek hale",
 		"lydia martin",
@@ -793,13 +800,18 @@
 		"the nogitsune",
 		"liam dunbar",
 		"peter hale",
+		"kate argent",
 		"jennifer blake",
 		"coach finstock",
+		"melissa mccall",
 		"caitlin",
+		"theo raeken",
+		"marin morrell",
 		"the argents",
 		"chris & allison",
 		"allison & kate",
 		"isaac & erica",
+		"scott & stiles",
 		"allison & lydia",
 		"stiles & allison",
 		"allison & scott & stiles",
@@ -809,10 +821,14 @@
 		"allydia",
 		"scallison",
 		"scallisaac",
+		"scott x lydia",
+		"stiles x malia",
 		"allison x isaac",
+		"scott x malia",
 		"boyd x erica",
 		"scott x isaac",
-	    	"scott x kira"
+	    	"scott x kira",
+		"the sheriff x melissa"
     	],
      	"Julie And The Phantoms": [
 		"jatp",
@@ -1842,7 +1858,8 @@
 		"nathan miller", 
 		"octavia blake", 
 		"wells jaha", 
-		"raven reyes"
+		"raven reyes",
+		"clarke x lexa"
 	],
 	"The Flash": [
 		"the flash"
