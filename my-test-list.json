@@ -277,7 +277,6 @@
 	],
 	"Book series": [
 		"asoiaf",
-		"hoo",
 		"soc",
 		"the grisha trilogy",
 		"the lunar chronicles",
@@ -627,6 +626,7 @@
 		"t'challa",
 		"thanos",
 		"thor odinson",
+		"w'kabi",
 		"tony stark"
    	 ],
     	"Supernatural": [
@@ -661,6 +661,7 @@
 		"adam milligan",
 		"rufus turner",
 		"azazel",
+		"gadreel",
 		"jimmy novak",
 		"claire novak",
 		"hael",
@@ -802,6 +803,7 @@
 		"allison & lydia",
 		"stiles & allison",
 		"allison & scott & stiles",
+		"stiles & allison & lydia",
 		"sterek",
 		"stydia",
 		"allydia",
@@ -854,7 +856,9 @@
 		"terry jeffords",
 		"doug judy",
 		"adrian pimento",
+		"jake & gina",
 		"amy & rosa",
+		"jake & rosa",
 		"jake x amy",
 		"jake & charles"
    	 ],
@@ -995,6 +999,7 @@
 		"cordelia x angel",
 		"xander x cordelia",
 		"spike x drusilla",
+		"xander x dawn",
 		"faith x angel"
     	],
 	"The Vampire Diaries": [
@@ -1040,7 +1045,9 @@
 		"padmé amidala",
 		"yoda",
 		"emperor palpatine",
-		"han x leia"
+		"kylo ren",
+		"han x leia",
+		"finn x rey"
     	],
 	"The Maze Runner": [
 		"tmr series",
@@ -1079,6 +1086,7 @@
 		"pjo",
 		"hoo",
 		"pjo verse: art",
+		"pjo verse: icons",
 		"percy jackson",
 		"annabeth chase",
 		"nico di angelo",
@@ -1093,7 +1101,8 @@
 		"tyson",
 		"luke castellan",
 		"percabeth",
-		"percico"
+		"percico",
+		"calypso x leo"
     	],
 	"Anne With An E": [
 		"awae",
@@ -1319,7 +1328,8 @@
 		"shane harvey",
 		"liam booker",
 		"amy raudenfeld",
-		"lauren cooper"
+		"lauren cooper",
+		"karma x amy"
     	],
 	"Firefly": [
 		"firefly",
@@ -1399,6 +1409,7 @@
 		"sandy ryerson",
 		"santana lopez",
 		"the unholy trinity",
+		"finn & kurt",
 		"finn x rachel",
 		"quinn x puck",
 		"brittany x santana"
@@ -1650,6 +1661,7 @@
 		"mona vanderwaal", 
 		"spencer hastings", 
 		"toby cavanaugh",
+		"aria & hanna",
 		"emily x alison"
 	],
 	"Prison Break": [
@@ -1799,6 +1811,7 @@
 		"james cook", 
 		"max oliver", 
 		"michelle richardson",
+		"franky fitzgerald",
 		"tony x michelle",
 		"cook x effy",
 		"freddie x effy",
