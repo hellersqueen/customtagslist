@@ -1,0 +1,25 @@
+{
+    "manifest_version": 3,
+    "name": "tumblr popover",
+    "description": "pop over des tumblr",
+    "version": "1.0",
+    "action": {
+      "default_icon": "icon.jpg"
+    },
+    "permissions": ["activeTab", "scripting"],
+"content_scripts": [
+    {
+      "matches": [
+        "*://www.tumblr.com/*",
+        "*://tumblr.com/*"
+      ],
+      "run_at": "document_end",
+      "js": [
+        "content_scripts/main.js",
+        "content_scripts/removeTumblrPopover.js"
+      ],
+      "css": [
+      ]
+    }
+  ]
+  }
